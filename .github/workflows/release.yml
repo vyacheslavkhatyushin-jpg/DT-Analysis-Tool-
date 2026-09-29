@@ -1,8 +1,14 @@
 name: Release
 
-# Pushing a tag like v0.1.0 builds the offline installation bundle
-# (deploy/scripts/make-release.sh) and publishes it as a GitHub release.
+# Builds the offline installation bundle (deploy/scripts/make-release.sh):
+# - "Run workflow" in the Actions tab: the bundle is attached to the run as an artifact;
+# - pushing a tag like v0.1.0 (or creating a release with it): the bundle is attached to the release.
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Версия, например 0.1.0"
+        required: true
   push:
     tags: ["v*"]
 
@@ -15,14 +21,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then version="$INPUT_VERSION"; else version="${GITHUB_REF_NAME#v}"; fi
+          # The version ends up in file names and image tags: allow only a safe character set.
+          [[ "$version" =~ ^[0-9A-Za-z._-]+$ ]] || { echo "Bad version: $version" >&2; exit 1; }
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
       - name: Build offline bundle
-        run: deploy/scripts/make-release.sh "${GITHUB_REF_NAME#v}"
+        run: deploy/scripts/make-release.sh "${{ steps.version.outputs.value }}"
+
+      - name: Upload bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dtat-${{ steps.version.outputs.value }}
+          path: |
+            release/dtat-${{ steps.version.outputs.value }}.tar.gz
+            release/dtat-${{ steps.version.outputs.value }}.tar.gz.sha256
+          compression-level: 0
+          retention-days: 30
 
       - name: Publish release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${{ steps.version.outputs.value }}"
           cat > notes.md <<EOF
           Архив для установки на ВМ без доступа в интернет: образы приложения и базы данных, docker-compose.yml, скрипты установки, бэкапа и восстановления.
 
@@ -35,6 +63,11 @@ jobs:
 
           Подробности: [docs/DEPLOYMENT.md](https://github.com/${{ github.repository }}/blob/$GITHUB_REF_NAME/docs/DEPLOYMENT.md).
           EOF
-          gh release create "$GITHUB_REF_NAME" \
-            "release/dtat-$version.tar.gz" "release/dtat-$version.tar.gz.sha256" \
-            --title "DT Analysis Tool $version" --notes-file notes.md
+          assets=("release/dtat-$version.tar.gz" "release/dtat-$version.tar.gz.sha256")
+          # The release may already exist when the tag was created from the GitHub UI.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+              --title "DT Analysis Tool $version" --notes-file notes.md
+          fi
