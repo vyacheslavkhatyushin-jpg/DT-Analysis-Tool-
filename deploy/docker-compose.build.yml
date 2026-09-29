@@ -3,6 +3,9 @@
 # The migrate service reuses the api image.
 services:
   api:
-    build: ../backend
+    build:
+      context: ../backend
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
   web:
     build: ../frontend

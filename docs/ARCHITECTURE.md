@@ -85,7 +85,7 @@ flowchart TB
 | Подложка | ортофото маркшейдерии + выгрузка OSM региона в PMTiles, раздаются своим сервером | без интернета |
 | Android | Kotlin, Jetpack Compose, foreground service, Room, WorkManager, MQTT-клиент | нативное API телефонии, надёжный офлайн-буфер |
 | Вход | Nginx, TLS от внутреннего CA | единая точка входа |
-| Поставка | Docker Compose; релиз = образы (`docker save`) + compose + миграции | офлайн-установка на ВМ |
+| Поставка | Docker Compose; образы из ghcr.io (обновление `update.sh`) или архив релиза (`docker save`) | ВМ с доступом к GitHub или полностью офлайн |
 | Качество | uv, ruff, mypy, pytest + testcontainers; ESLint, Prettier, Vitest; ktlint, detekt; pre-commit; GitHub Actions | стандартные практики, проверка на каждый push |
 
 Решения, которые меняют архитектуру, фиксируем в `docs/adr/` (Architecture Decision Records).

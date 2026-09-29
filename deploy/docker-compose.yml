@@ -1,6 +1,14 @@
-# Production stack. Images come from a release bundle (see docs/DEPLOYMENT.md);
+# Production stack (see docs/DEPLOYMENT.md). Images come either from a release bundle or,
+# for installations from a git clone, from the registry set in online.env;
 # docker-compose.build.yml adds build contexts for building them from source.
 name: dtat
+
+# Docker keeps container logs forever by default: cap them so they cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
 
 x-api-env: &api-env
   DTAT_DATABASE_URL: postgresql+psycopg://dtat:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/dtat
@@ -12,7 +20,8 @@ x-api-env: &api-env
 
 services:
   db:
-    image: timescale/timescaledb-ha:pg16
+    logging: *logging
+    image: ${DTAT_DB_IMAGE:-timescale/timescaledb-ha:pg16}
     restart: unless-stopped
     environment:
       POSTGRES_USER: dtat
@@ -29,7 +38,8 @@ services:
 
   # One-shot: applies migrations and creates the first admin, then exits.
   migrate:
-    image: dtat-api:${DTAT_VERSION:-latest}
+    logging: *logging
+    image: ${DTAT_IMAGE_PREFIX:-}dtat-api:${DTAT_VERSION:-latest}
     command: ["sh", "-c", "dtat migrate && dtat bootstrap"]
     environment: *api-env
     depends_on:
@@ -38,7 +48,8 @@ services:
     restart: "no"
 
   api:
-    image: dtat-api:${DTAT_VERSION:-latest}
+    logging: *logging
+    image: ${DTAT_IMAGE_PREFIX:-}dtat-api:${DTAT_VERSION:-latest}
     restart: unless-stopped
     environment: *api-env
     volumes:
@@ -48,7 +59,8 @@ services:
         condition: service_completed_successfully
 
   web:
-    image: dtat-web:${DTAT_VERSION:-latest}
+    logging: *logging
+    image: ${DTAT_IMAGE_PREFIX:-}dtat-web:${DTAT_VERSION:-latest}
     restart: unless-stopped
     environment:
       DTAT_HTTPS_PORT: ${DTAT_HTTPS_PORT:-443}

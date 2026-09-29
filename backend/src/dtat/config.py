@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DTAT_", env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://dtat:dtat@localhost:5432/dtat"
+    # Git commit the image was built from (set by the Dockerfile), shown by /api/health.
+    build: str = "dev"
 
     # JWT signing key. Must be overridden in production (see deploy/.env.example).
     secret_key: str = Field(default="dev-insecure-secret-change-me", min_length=16)
