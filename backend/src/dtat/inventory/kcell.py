@@ -8,6 +8,9 @@ Mapping (source columns → template):
 - EUTRANCELL → cell name, Cell ID, PHYSICALCELLID, EARFCNDL (UL = DL + 18000 for bands 1–28),
   AZIMUT, HEIGHT, tilts, antenna type;
 - indoor/DAS cells get no azimuth (drawn as a circle); their type goes to the cell notes;
+- Tower = 1 → mobile site on a mobile tower, ДГУ = 1 → powered by a diesel generator;
+- the unnamed column after "Number of antennas" (PCI / 3) is skipped: the app checks PCI mod 3;
+- bandwidth and power are not in the source: pass them with `bandwidth_mhz`, `max_tx_power_dbm`;
 - remote sectors ("Remote сектор ERBS_<code>[_<name>]" in the comment, or other coordinates than the
   rest of the site) become their own sites, with "Код сайта eNB" pointing back to the eNodeB's site.
   The source gives remote sectors the eNodeB's coordinates: pass the real ones with `positions`.
@@ -36,6 +39,7 @@ class SiteRow:
     lat: float
     lon: float
     notes: list[str] = field(default_factory=list)
+    mobile: bool = False
 
 
 @dataclass
@@ -59,7 +63,11 @@ def _text(value: Any) -> str:
 
 
 def convert(
-    source: BinaryIO | str, positions: dict[str, tuple[float, float]] | None = None
+    source: BinaryIO | str,
+    positions: dict[str, tuple[float, float]] | None = None,
+    *,
+    bandwidth_mhz: float | None = None,
+    max_tx_power_dbm: float | None = None,
 ) -> Conversion:
     positions = positions or {}
     ws = load_workbook(source, data_only=True).active
@@ -94,9 +102,9 @@ def convert(
             home = sites.setdefault(enb_site_code, SiteRow(enb_site_code, site_name, lat, lon))
             home.name = site_name
             home.lat, home.lon = positions.get(enb_site_code, (lat, lon))
-            flags = [f"{n}={get(row, n)}" for n in ("Tower", "ДГУ") if get(row, n)]
-            if flags:
-                home.notes.append("Kcell: " + ", ".join(flags))
+            home.mobile = bool(get(row, "Tower"))
+            if get(row, "ДГУ"):
+                home.notes.append("питание от ДГУ")
             source_coords[enb_site_code] = (lat, lon)
             located.setdefault((lat, lon), enb_site_code)
         home = sites[enb_site_code]
@@ -147,6 +155,8 @@ def convert(
                 "pci": int(get(row, "PHYSICALCELLID")),
                 "earfcn_dl": earfcn,
                 "earfcn_ul": earfcn + UL_OFFSET,
+                "bandwidth_mhz": bandwidth_mhz,
+                "max_tx_power_dbm": max_tx_power_dbm,
                 "antenna_model": _text(get(row, "Antenna type")) or None,
                 "height_m": _number(get(row, "HEIGHT")),
                 "azimuth_deg": None if indoor else _number(get(row, "AZIMUT")),
@@ -166,10 +176,11 @@ def write_template(conversion: Conversion) -> bytes:
         values = {
             "code": site.code,
             "name": site.name,
-            "kind": "стационарный",
+            "kind": "передвижной" if site.mobile else "стационарный",
             "status": "в работе",
             "lat": site.lat,
             "lon": site.lon,
+            "structure_type": "передвижная башня" if site.mobile else None,
             "notes": "; ".join(site.notes) or None,
         }
         site_ws.append([values.get(c.key) for c in SITES.columns])

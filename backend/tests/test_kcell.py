@@ -16,10 +16,11 @@ A, B = (46.95, 79.95), (46.96, 79.86)
 
 def _row(sitename: str, cell: str, cell_id: int, pci: int, coords: tuple[float, float],
          *, site_type: str = "Outdoor", azimuth: float = 120, antennas: int = 1,
-         tower: int | None = None, comment: str | None = None) -> list[object]:  # fmt: skip
+         tower: int | None = None, dgu: int | None = None,
+         comment: str | None = None) -> list[object]:  # fmt: skip
     return [
         None, sitename, cell, cell_id, site_type, 6200, "HW ADU4518R7v06", 5, 0, pci, azimuth,
-        30, *coords, antennas, None, tower, None, comment,
+        30, *coords, antennas, pci / 3, tower, dgu, comment,
     ]  # fmt: skip
 
 
@@ -38,7 +39,7 @@ def _source(*rows: list[object]) -> BytesIO:
 
 def test_convert_sites_cells_and_remote_sectors() -> None:
     source = _source(
-        _row("ERBS_34344_SULPHIDE_KP", "P_534344-70", 70, 43, A, tower=1),
+        _row("ERBS_34344_SULPHIDE_KP", "P_534344-70", 70, 43, A, tower=1, dgu=1),
         _row(
             "ERBS_34344_SULPHIDE_KP",
             "P_534344-78",
@@ -64,11 +65,14 @@ def test_convert_sites_cells_and_remote_sectors() -> None:
         _row("ERBS_34371_ZHANAR_KP", "34371D", 14, 17, A),
         _row("ERBS_34348_KONUS_KP", "P_534348-70", 70, 50, (46.949, 79.938)),
     )
-    result = convert(source, {"34348": (46.949468, 79.938039)})
+    result = convert(
+        source, {"34348": (46.949468, 79.938039)}, bandwidth_mhz=10, max_tx_power_dbm=46.0
+    )
 
     sites = {s.code: s for s in result.sites}
     assert list(sites) == ["34344", "34348", "34371"]
-    assert sites["34344"].notes == ["Kcell: Tower=1"]
+    assert (sites["34344"].mobile, sites["34344"].notes) == (True, ["питание от ДГУ"])
+    assert not sites["34371"].mobile
     assert sites["34371"].notes == ["Сущ-ая вышка"]
     # 34348 was first seen as a remote location, then as an eNodeB site: real name, given position.
     assert (sites["34348"].name, sites["34348"].lat) == ("KONUS_KP", 46.949468)
@@ -77,6 +81,10 @@ def test_convert_sites_cells_and_remote_sectors() -> None:
     assert cells["P_534344-70"]["notes"] is None
     assert cells["P_534344-70"]["enb_id"] == 34344
     assert cells["P_534344-70"]["earfcn_ul"] == 24200
+    assert (cells["P_534344-70"]["bandwidth_mhz"], cells["P_534344-70"]["max_tx_power_dbm"]) == (
+        10,
+        46.0,
+    )
     assert cells["P_534344-70"]["azimuth_deg"] == 120
     assert cells["P_534344-78"]["azimuth_deg"] is None
     assert cells["P_534344-78"]["notes"] == "Indoor DAS; антенн: 5; Офис внутри"
@@ -91,7 +99,7 @@ def test_convert_sites_cells_and_remote_sectors() -> None:
 
 def test_converted_template_imports_cleanly(engineer: TestClient) -> None:
     source = _source(
-        _row("ERBS_34344_SULPHIDE_KP", "P_534344-70", 70, 43, A),
+        _row("ERBS_34344_SULPHIDE_KP", "P_534344-70", 70, 43, A, tower=1, dgu=1),
         _row(
             "ERBS_34344_SULPHIDE_KP",
             "P_534344-80",
@@ -102,7 +110,7 @@ def test_converted_template_imports_cleanly(engineer: TestClient) -> None:
             comment="Remote сектор ERBS_PS3",
         ),
     )
-    data = write_template(convert(source, {"PS3": B}))
+    data = write_template(convert(source, {"PS3": B}, bandwidth_mhz=10, max_tx_power_dbm=46.0))
     response = engineer.post(
         "/api/v1/inventory/import",
         files={"file": ("inventory.xlsx", data, "application/octet-stream")},
@@ -113,6 +121,19 @@ def test_converted_template_imports_cleanly(engineer: TestClient) -> None:
     cells = {c["name"]: c for c in engineer.get("/api/v1/cells").json()}
     assert cells["P_534344-80"]["site_code"] == "PS3"
     assert cells["P_534344-80"]["enodeb_site_code"] == "34344"
+    assert (cells["P_534344-70"]["bandwidth_mhz"], cells["P_534344-70"]["max_tx_power_dbm"]) == (
+        10,
+        46.0,
+    )
+    sites = {s["code"]: s for s in engineer.get("/api/v1/sites").json()}
+    assert (sites["34344"]["kind"], sites["34344"]["structure_type"]) == (
+        "mobile",
+        "передвижная башня",
+    )
+    assert (sites["PS3"]["kind"], sites["PS3"]["notes"]) == (
+        "stationary",
+        "выносные секторы eNodeB 34344",
+    )
 
 
 def test_convert_rejects_other_layouts() -> None:
