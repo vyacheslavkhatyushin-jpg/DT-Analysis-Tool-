@@ -50,6 +50,11 @@ fi
 say "Запуск"
 docker compose up -d --remove-orphans
 docker compose ps
+
+say "Удаление образов прежних версий"
+for repo in dtat-api dtat-web; do
+  docker images "$repo" --format '{{.Repository}}:{{.Tag}}' | grep -v ":$VERSION\$" | xargs -r docker rmi || true
+done
 https_port="$(grep -E '^DTAT_HTTPS_PORT=' .env | cut -d= -f2)"
 port_suffix=""
 [ -n "$https_port" ] && [ "$https_port" != "443" ] && port_suffix=":$https_port"

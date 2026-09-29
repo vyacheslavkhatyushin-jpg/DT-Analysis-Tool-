@@ -2,6 +2,13 @@
 # docker-compose.build.yml adds build contexts for building them from source.
 name: dtat
 
+# Docker keeps container logs forever by default: cap them so they cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 x-api-env: &api-env
   DTAT_DATABASE_URL: postgresql+psycopg://dtat:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/dtat
   DTAT_SECRET_KEY: ${DTAT_SECRET_KEY:?set DTAT_SECRET_KEY in .env}
@@ -12,6 +19,7 @@ x-api-env: &api-env
 
 services:
   db:
+    logging: *logging
     image: timescale/timescaledb-ha:pg16
     restart: unless-stopped
     environment:
@@ -29,6 +37,7 @@ services:
 
   # One-shot: applies migrations and creates the first admin, then exits.
   migrate:
+    logging: *logging
     image: dtat-api:${DTAT_VERSION:-latest}
     command: ["sh", "-c", "dtat migrate && dtat bootstrap"]
     environment: *api-env
@@ -38,6 +47,7 @@ services:
     restart: "no"
 
   api:
+    logging: *logging
     image: dtat-api:${DTAT_VERSION:-latest}
     restart: unless-stopped
     environment: *api-env
@@ -48,6 +58,7 @@ services:
         condition: service_completed_successfully
 
   web:
+    logging: *logging
     image: dtat-web:${DTAT_VERSION:-latest}
     restart: unless-stopped
     environment:
