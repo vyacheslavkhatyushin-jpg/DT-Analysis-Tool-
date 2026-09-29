@@ -78,9 +78,31 @@ jobs:
   images:
     runs-on: ubuntu-latest
     needs: [backend, frontend]
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Build images
         run: |
-          docker build -t dtat-api:ci backend
+          docker build --build-arg GIT_SHA="${GITHUB_SHA::7}" -t dtat-api:ci backend
           docker build -t dtat-web:ci frontend
+      # Installations from a git clone (deploy/install.sh, online.env) pull these images.
+      - name: Publish to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          prefix="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          for name in dtat-api dtat-web; do
+            for tag in main "sha-${GITHUB_SHA::7}"; do
+              docker tag "$name:ci" "$prefix/$name:$tag"
+              docker push -q "$prefix/$name:$tag"
+            done
+          done
+          # The database image is mirrored so the VM only needs access to GitHub domains.
+          db="$prefix/timescaledb-ha:pg16"
+          if ! docker buildx imagetools inspect "$db" >/dev/null 2>&1; then
+            docker buildx imagetools create -t "$db" timescale/timescaledb-ha:pg16
+          fi

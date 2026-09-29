@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
     @app.get("/api/health", tags=["system"])
     def health(session: DbSession) -> dict[str, str]:
         session.execute(text("SELECT 1"))
-        return {"status": "ok", "version": __version__}
+        return {"status": "ok", "version": __version__, "build": settings.build}
 
     # In production nginx serves /tiles; this is for local development without nginx.
     if settings.serve_tiles and settings.tiles_dir.is_dir():

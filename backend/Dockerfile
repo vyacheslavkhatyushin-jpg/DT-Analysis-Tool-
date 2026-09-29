@@ -11,10 +11,11 @@ COPY src ./src
 RUN uv sync --frozen --no-dev --no-editable
 
 FROM python:3.12-slim
+ARG GIT_SHA=dev
 RUN useradd --system --uid 10001 --home-dir /app dtat
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv
-ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 DTAT_BUILD=$GIT_SHA
 USER dtat
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \

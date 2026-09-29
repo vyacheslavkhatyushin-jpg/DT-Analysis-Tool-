@@ -16,7 +16,7 @@ rm -rf "$out"
 mkdir -p "$out/images"
 
 echo "== Сборка образов $version"
-DTAT_VERSION="$version" POSTGRES_PASSWORD=x DTAT_SECRET_KEY=x \
+GIT_SHA="$(git -C "$root" rev-parse --short HEAD)" DTAT_VERSION="$version" POSTGRES_PASSWORD=x DTAT_SECRET_KEY=x \
   docker compose -f "$root/deploy/docker-compose.yml" -f "$root/deploy/docker-compose.build.yml" build
 docker save "dtat-api:$version" "dtat-web:$version" | gzip > "$out/images/dtat-app.tar.gz"
 if $with_db; then
@@ -26,7 +26,7 @@ fi
 
 echo "== Файлы установки"
 cp "$root/deploy/docker-compose.yml" "$root/deploy/.env.example" "$out/"
-cp "$root"/deploy/scripts/{install,make-cert,backup,restore}.sh "$out/"
+cp "$root"/deploy/{install,make-cert,backup,restore}.sh "$out/"
 cp "$root/docs/DEPLOYMENT.md" "$out/README.md"
 echo "$version" > "$out/VERSION"
 chmod +x "$out"/*.sh

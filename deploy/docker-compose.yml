@@ -1,4 +1,5 @@
-# Production stack. Images come from a release bundle (see docs/DEPLOYMENT.md);
+# Production stack (see docs/DEPLOYMENT.md). Images come either from a release bundle or,
+# for installations from a git clone, from the registry set in online.env;
 # docker-compose.build.yml adds build contexts for building them from source.
 name: dtat
 
@@ -20,7 +21,7 @@ x-api-env: &api-env
 services:
   db:
     logging: *logging
-    image: timescale/timescaledb-ha:pg16
+    image: ${DTAT_DB_IMAGE:-timescale/timescaledb-ha:pg16}
     restart: unless-stopped
     environment:
       POSTGRES_USER: dtat
@@ -38,7 +39,7 @@ services:
   # One-shot: applies migrations and creates the first admin, then exits.
   migrate:
     logging: *logging
-    image: dtat-api:${DTAT_VERSION:-latest}
+    image: ${DTAT_IMAGE_PREFIX:-}dtat-api:${DTAT_VERSION:-latest}
     command: ["sh", "-c", "dtat migrate && dtat bootstrap"]
     environment: *api-env
     depends_on:
@@ -48,7 +49,7 @@ services:
 
   api:
     logging: *logging
-    image: dtat-api:${DTAT_VERSION:-latest}
+    image: ${DTAT_IMAGE_PREFIX:-}dtat-api:${DTAT_VERSION:-latest}
     restart: unless-stopped
     environment: *api-env
     volumes:
@@ -59,7 +60,7 @@ services:
 
   web:
     logging: *logging
-    image: dtat-web:${DTAT_VERSION:-latest}
+    image: ${DTAT_IMAGE_PREFIX:-}dtat-web:${DTAT_VERSION:-latest}
     restart: unless-stopped
     environment:
       DTAT_HTTPS_PORT: ${DTAT_HTTPS_PORT:-443}
