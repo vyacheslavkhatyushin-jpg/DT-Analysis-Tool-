@@ -181,11 +181,14 @@ class CellFields(BaseModel):
 
 class CellCreate(CellFields):
     enodeb_id: int
+    # Where the antenna is installed; defaults to the eNodeB's site.
+    site_id: int | None = None
     local_cell_id: int = Field(ge=0, le=LOCAL_CELL_ID_MAX)
 
 
 class CellUpdate(EffectiveAt):
     enodeb_id: int | None = None
+    site_id: int | None = None
     local_cell_id: int | None = Field(default=None, ge=0, le=LOCAL_CELL_ID_MAX)
     name: OptStr = Field(default=None, max_length=64)
     status: Status | None = None
@@ -208,8 +211,11 @@ class CellRead(CellFields):
     id: int
     enodeb_id: int
     enb_id: int
+    # Installation site of the antenna, and the site of the eNodeB (differs for remote sectors).
     site_id: int
     site_code: str
+    enodeb_site_id: int
+    enodeb_site_code: str
     local_cell_id: int
     eci: int
     band: int | None
@@ -225,8 +231,10 @@ class CellRead(CellFields):
             id=cell.id,
             enodeb_id=cell.enodeb_id,
             enb_id=cell.enodeb.enb_id,
-            site_id=cell.enodeb.site_id,
-            site_code=cell.enodeb.site.code,
+            site_id=cell.site_id,
+            site_code=cell.site.code,
+            enodeb_site_id=cell.enodeb.site_id,
+            enodeb_site_code=cell.enodeb.site.code,
             local_cell_id=cell.local_cell_id,
             eci=cell.eci,
             band=cell.band,

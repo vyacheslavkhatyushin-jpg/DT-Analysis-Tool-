@@ -73,7 +73,7 @@ def map_inventory(_: CurrentUser, session: DbSession) -> list[MapSite]:
                 id=cell.id,
                 name=cell.name,
                 eci=cell.eci,
-                enb_id=enodeb.enb_id,
+                enb_id=cell.enodeb.enb_id,
                 local_cell_id=cell.local_cell_id,
                 pci=cell.pci,
                 earfcn_dl=cell.earfcn_dl,
@@ -84,8 +84,7 @@ def map_inventory(_: CurrentUser, session: DbSession) -> list[MapSite]:
                 height_m=cell.height_m,
                 status=cell.status,
             )
-            for enodeb in site.enodebs
-            for cell in enodeb.cells
+            for cell in site.cells
         ]
         result.append(
             MapSite(

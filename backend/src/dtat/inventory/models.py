@@ -80,6 +80,8 @@ class Site(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text)
 
     enodebs: Mapped[list["ENodeB"]] = relationship(back_populates="site", order_by="ENodeB.enb_id")
+    # Cells whose antennas are installed here (their eNodeB may be on another site).
+    cells: Mapped[list["Cell"]] = relationship(back_populates="site", order_by="Cell.eci")
 
 
 class SitePosition(Base):
@@ -104,6 +106,9 @@ class SitePosition(Base):
 
 
 class ENodeB(Base, TimestampMixin):
+    """Base station. `site` is where the baseband is; cells may be installed on other sites
+    (remote radio units, DAS in another building)."""
+
     __tablename__ = "enodeb"
     __table_args__ = (CheckConstraint("enb_id BETWEEN 0 AND 1048575", name="enb_id_range"),)
 
@@ -143,6 +148,7 @@ class CellConfigMixin:
 
 # Fields copied into every CellVersion snapshot.
 CELL_VERSIONED_FIELDS: tuple[str, ...] = (
+    "site_id",
     "eci",
     "local_cell_id",
     "status",
@@ -174,6 +180,8 @@ class Cell(CellConfigMixin, Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     enodeb_id: Mapped[int] = mapped_column(ForeignKey("enodeb.id", ondelete="RESTRICT"), index=True)
+    # Where the antenna is installed: usually the eNodeB's site, but not for remote sectors.
+    site_id: Mapped[int] = mapped_column(ForeignKey("site.id", ondelete="RESTRICT"), index=True)
     local_cell_id: Mapped[int] = mapped_column()
     # Derived from eNB ID and local cell ID by the service layer; unique network-wide.
     eci: Mapped[int] = mapped_column(unique=True)
@@ -182,6 +190,7 @@ class Cell(CellConfigMixin, Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text)
 
     enodeb: Mapped[ENodeB] = relationship(back_populates="cells")
+    site: Mapped[Site] = relationship(back_populates="cells")
 
 
 class CellVersion(CellConfigMixin, Base):

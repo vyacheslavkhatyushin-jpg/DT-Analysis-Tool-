@@ -190,3 +190,42 @@ def test_map_inventory_and_overlays(engineer: TestClient) -> None:
     bad = engineer.post("/api/v1/map/overlays", json={"name": "X", "geojson": {"type": "Point"}})
     assert bad.status_code == 422
     assert engineer.get("/api/v1/map/overlays").json()[0]["geojson"] == geojson
+
+
+def test_remote_sector_on_another_site(engineer: TestClient) -> None:
+    home = create_site(engineer, code="ZH", lat=46.894, lon=79.612)
+    remote = create_site(engineer, code="PS3", lat=46.958, lon=79.858)
+    enodeb = create_enodeb(engineer, home["id"], enb_id=34371)
+    local = create_cell(engineer, enodeb["id"], local_cell_id=11, name="ZH-A")
+    far = create_cell(engineer, enodeb["id"], local_cell_id=14, name="ZH-D", site_id=remote["id"])
+    assert local["site_code"] == "ZH"
+    assert (far["site_code"], far["enodeb_site_code"]) == ("PS3", "ZH")
+
+    at_remote = engineer.get("/api/v1/cells", params={"site_id": remote["id"]}).json()
+    assert [c["name"] for c in at_remote] == ["ZH-D"]
+    sites = {s["code"]: s for s in engineer.get("/api/v1/map/inventory").json()}
+    assert [c["name"] for c in sites["PS3"]["cells"]] == ["ZH-D"]
+    assert [c["name"] for c in sites["ZH"]["cells"]] == ["ZH-A"]
+
+    # A site with installed cells cannot be deleted.
+    assert engineer.delete(f"/api/v1/sites/{remote['id']}").status_code == 409
+
+
+def test_moving_cell_creates_version(engineer: TestClient) -> None:
+    home = create_site(engineer, code="A")
+    other = create_site(engineer, code="B", lat=54.1, lon=87.1)
+    cell = create_cell(engineer, create_enodeb(engineer, home["id"])["id"])
+    engineer.patch(f"/api/v1/cells/{cell['id']}", json={"site_id": other["id"]})
+    versions = engineer.get(f"/api/v1/cells/{cell['id']}/versions").json()
+    assert [v["site_id"] for v in versions] == [other["id"], home["id"]]
+
+
+def test_moving_enodeb_keeps_cell_sites(engineer: TestClient) -> None:
+    home = create_site(engineer, code="A")
+    other = create_site(engineer, code="B", lat=54.1, lon=87.1)
+    enodeb = create_enodeb(engineer, home["id"])
+    cell = create_cell(engineer, enodeb["id"])
+    engineer.patch(f"/api/v1/enodebs/{enodeb['id']}", json={"site_id": other["id"]})
+    moved = engineer.get(f"/api/v1/cells/{cell['id']}").json()
+    assert (moved["site_code"], moved["enodeb_site_code"]) == ("A", "B")
+    assert len(engineer.get(f"/api/v1/cells/{cell['id']}/versions").json()) == 1

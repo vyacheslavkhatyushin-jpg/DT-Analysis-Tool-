@@ -163,6 +163,22 @@ pmtiles extract https://build.protomaps.com/<дата>.pmtiles region.pmtiles --
 ogr2ogr -f GeoJSON -s_srs "<proj-строка местной СК>" -t_srs EPSG:4326 pit.geojson pit.dxf
 ```
 
+## Данные оператора (Site Data)
+
+Файл оператора со списком сот (формат Kcell: столбцы `SITENAME`, `EUTRANCELL`, `Cell ID`, `PHYSICALCELLID`,
+`EARFCNDL`, `AZIMUT`…) переводится в шаблон импорта командой `dtat convert-kcell`. Выносные секторы
+(«Remote сектор ERBS_…» в комментарии) становятся отдельными сайтами. Оператор даёт им координаты eNodeB,
+настоящие указываются ключом `--position` (можно несколько):
+
+```bash
+cd /opt/dtat/deploy
+sudo docker compose run --rm --no-deps -v "$PWD:/work" -w /work --user "$(id -u):$(id -g)" api \
+  dtat convert-kcell Site_Data.xlsx inventory.xlsx --position 34348=46.949468,79.938039
+```
+
+Файлы берутся из текущей папки и сохраняются в неё. Полученный `inventory.xlsx` загрузите в интерфейсе:
+«Импорт и экспорт» → «Проверить», затем «Применить».
+
 ## Обновление
 
 Установка из GitHub: `sudo ./update.sh` (см. выше).

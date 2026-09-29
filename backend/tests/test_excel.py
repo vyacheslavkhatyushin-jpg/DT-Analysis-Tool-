@@ -68,7 +68,8 @@ def test_export_import_round_trip_is_unchanged(engineer: TestClient, session: Se
 
 def test_import_creates_and_updates(engineer: TestClient) -> None:
     site_row = ["KR-01", "Борт север", "стационарный", "в работе", 54.1, 87.1]
-    cell_row = ["KR-01", 170001, "KR-01", 1, None, "KR-01-1", "в работе", 5, 1300]
+    # Код сайта, eNB ID, Имя eNB, Код сайта eNB, Cell ID, ECI, Имя соты, Статус, PCI, EARFCN DL
+    cell_row = ["KR-01", 170001, "KR-01", None, 1, None, "KR-01-1", "в работе", 5, 1300]
     data = _workbook_with({"Сайты": [site_row], "Соты": [cell_row]})
 
     preview = _upload(engineer, data, dry_run=True)
@@ -82,7 +83,7 @@ def test_import_creates_and_updates(engineer: TestClient) -> None:
     assert cell["eci"] == 170001 * 256 + 1
     assert cell["pci"] == 5
 
-    changed = _workbook_with({"Сайты": [site_row], "Соты": [[*cell_row[:7], 8, 1300]]})
+    changed = _workbook_with({"Сайты": [site_row], "Соты": [[*cell_row[:8], 8, 1300]]})
     report = _upload(engineer, changed, dry_run=False, effective_at="2026-01-15T08:00:00Z")
     assert _sheet(report, "Соты")["updated"] == 1
     assert _sheet(report, "Сайты")["unchanged"] == 1
@@ -101,7 +102,7 @@ def test_import_with_errors_applies_nothing(engineer: TestClient) -> None:
                 ["BAD-1", None, "шалаш", None, 54.0, 87.0],
                 ["BAD-2", None, None, None, "север", 87.0],
             ],
-            "Соты": [["NOPE", 1, None, 1, None, None, None, 1, 1300]],
+            "Соты": [["NOPE", 1, None, None, 1, None, None, None, 1, 1300]],
         }
     )
     report = _upload(engineer, data, dry_run=False)
@@ -147,3 +148,29 @@ def test_not_an_xlsx(engineer: TestClient) -> None:
         data={"dry_run": "true"},
     )
     assert response.status_code == 422
+
+
+def test_import_remote_sector(engineer: TestClient) -> None:
+    sites: list[list[object]] = [
+        ["ZH", "Жанар", None, None, 46.894, 79.612],
+        ["ZH-PS3", "PS3", None, None, 46.958, 79.858],
+    ]
+    cells: list[list[object]] = [
+        ["ZH", 34371, "ERBS_34371", None, 11, None, "ZH-A", None, 7, 6200],
+        ["ZH-PS3", 34371, "ERBS_34371", "ZH", 14, None, "ZH-D", None, 17, 6200],
+    ]
+    report = _upload(engineer, _workbook_with({"Сайты": sites, "Соты": cells}), dry_run=False)
+    assert report["applied"], report
+    by_name = {c["name"]: c for c in engineer.get("/api/v1/cells").json()}
+    assert by_name["ZH-A"]["site_code"] == "ZH"
+    assert by_name["ZH-D"]["site_code"] == "ZH-PS3"
+    assert by_name["ZH-D"]["enodeb_site_code"] == "ZH"
+
+    exported = engineer.get("/api/v1/inventory/export.xlsx").content
+    ws = load_workbook(BytesIO(exported))["Соты"]
+    headers = [c.value for c in ws[1]]
+    rows = {r[headers.index("Имя соты")]: r for r in ws.iter_rows(min_row=2, values_only=True)}
+    assert rows["ZH-D"][headers.index("Код сайта eNB")] == "ZH"
+    assert rows["ZH-A"][headers.index("Код сайта eNB")] is None
+    round_trip = _upload(engineer, exported, dry_run=True)
+    assert all(s["created"] == s["updated"] == 0 for s in round_trip["sheets"]), round_trip

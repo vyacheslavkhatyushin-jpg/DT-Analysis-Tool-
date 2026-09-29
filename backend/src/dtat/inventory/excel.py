@@ -27,7 +27,7 @@ from dtat.errors import DomainError, InvalidDataError
 from dtat.inventory import service
 from dtat.inventory.labels import LABELS, label, parse_enum
 from dtat.inventory.lte import make_eci
-from dtat.inventory.models import AssetKind, DeviceKind, SiteKind, Status
+from dtat.inventory.models import AssetKind, DeviceKind, Site, SiteKind, Status
 from dtat.inventory.schemas import (
     AssetCreate,
     AssetUpdate,
@@ -98,6 +98,7 @@ CELLS = SheetSpec(
         Column("site_code", "Код сайта", required=True),
         Column("enb_id", "eNB ID", "int", required=True, width=10),
         Column("enb_name", "Имя eNB", width=16),
+        Column("enb_site_code", "Код сайта eNB", width=14),
         Column("local_cell_id", "Cell ID", "int", required=True, width=9),
         Column("eci", "ECI (расчётный)", "int", export_only=True, width=16),
         Column("name", "Имя соты", width=18),
@@ -184,6 +185,8 @@ INSTRUCTIONS = [
     "Как загрузка сопоставляет строки с объектами в системе:",
     "  • сайт: по коду сайта;",
     "  • сота: по паре eNB ID + Cell ID (из них рассчитывается ECI = eNB ID × 256 + Cell ID);",
+    "    «Код сайта» соты — где установлена антенна. «Код сайта eNB» заполняется только для",
+    "    выносных секторов и DAS в другом здании: там указывается сайт, где стоит сам eNodeB.",
     "  • техника: по бортовому номеру;",
     "  • устройство: по IMEI, если указан, иначе по названию.",
     "Найденные объекты обновляются, новые создаются. Удаления через файл не выполняются.",
@@ -254,7 +257,11 @@ def _export_rows(session: Session) -> dict[str, list[dict[str, Any]]]:
     for cell in service.list_cells(session):
         row = {c.key: getattr(cell, c.key, None) for c in CELLS.columns}
         row.update(
-            site_code=cell.enodeb.site.code, enb_id=cell.enodeb.enb_id, enb_name=cell.enodeb.name
+            site_code=cell.site.code,
+            enb_id=cell.enodeb.enb_id,
+            enb_name=cell.enodeb.name,
+            # Filled only for remote sectors, whose eNodeB is on another site.
+            enb_site_code=cell.enodeb.site.code if cell.enodeb.site_id != cell.site_id else None,
         )
         cells.append(row)
     assets = [
@@ -406,20 +413,27 @@ def _import_cell(
     site_code = values.pop("site_code")
     enb_id = values.pop("enb_id")
     enb_name = values.pop("enb_name", None)
+    enb_site_code = values.pop("enb_site_code", None)
     local_cell_id = values.pop("local_cell_id")
 
-    site = service.find_site_by_code(session, site_code)
-    if site is None:
-        raise InvalidDataError(f"Сайт {site_code} не найден: добавьте его на лист «Сайты»")
+    def site_or_error(code: str) -> Site:
+        site = service.find_site_by_code(session, code)
+        if site is None:
+            raise InvalidDataError(f"Сайт {code} не найден: добавьте его на лист «Сайты»")
+        return site
+
+    # "Код сайта" is where the antenna is; "Код сайта eNB" is set only for remote sectors.
+    site = site_or_error(site_code)
+    enb_site = site_or_error(enb_site_code) if enb_site_code else site
     enodeb = service.find_enodeb_by_enb_id(session, enb_id)
     if enodeb is None:
         enodeb = service.create_enodeb(
-            session, actor, ENodeBCreate(site_id=site.id, enb_id=enb_id, name=enb_name)
+            session, actor, ENodeBCreate(site_id=enb_site.id, enb_id=enb_id, name=enb_name)
         )
     else:
         enodeb_changes: dict[str, Any] = {"effective_at": at}
-        if enodeb.site_id != site.id:
-            enodeb_changes["site_id"] = site.id
+        if enb_site_code and enodeb.site_id != enb_site.id:
+            enodeb_changes["site_id"] = enb_site.id
         if enb_name is not None:
             enodeb_changes["name"] = enb_name
         service.update_enodeb(
@@ -429,12 +443,15 @@ def _import_cell(
     cell = service.find_cell_by_eci(session, make_eci(enb_id, local_cell_id))
     if cell is None:
         data = CellCreate.model_validate(
-            {**values, "enodeb_id": enodeb.id, "local_cell_id": local_cell_id}
+            {**values, "enodeb_id": enodeb.id, "site_id": site.id, "local_cell_id": local_cell_id}
         )
         service.create_cell(session, actor, data)
         return "created"
     _, changed = service.update_cell(
-        session, actor, cell.id, CellUpdate.model_validate({**values, "effective_at": at})
+        session,
+        actor,
+        cell.id,
+        CellUpdate.model_validate({**values, "site_id": site.id, "effective_at": at}),
     )
     return _outcome(changed)
 
