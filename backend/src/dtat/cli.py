@@ -17,6 +17,19 @@ app = typer.Typer(no_args_is_help=True, help="DT Analysis Tool: служебны
 
 
 @app.command()
+def migrate(revision: str = "head") -> None:
+    """Apply database migrations (independent of the current directory)."""
+    from alembic import command
+    from alembic.config import Config
+
+    config = Config()
+    config.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
+    config.attributes["configure_logger"] = False
+    command.upgrade(config, revision)
+    typer.echo(f"База данных обновлена до {revision}")
+
+
+@app.command()
 def bootstrap() -> None:
     """Create the initial admin from DTAT_INITIAL_ADMIN_* variables if there are no users yet."""
     settings = get_settings()

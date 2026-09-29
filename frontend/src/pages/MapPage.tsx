@@ -15,6 +15,11 @@ import { buildStyle, type Selection } from '../map/style'
 
 const PANEL_WIDTH = 408
 
+// Keeps centered objects clear of the search box and the object panel.
+function paddingFor(panelOpen: boolean) {
+  return { top: 60, bottom: 20, left: 20, right: panelOpen ? PANEL_WIDTH + 24 : 20 }
+}
+
 function parseSelection(params: URLSearchParams): Selection {
   const site = Number(params.get('site'))
   if (site) return { type: 'site', id: site }
@@ -35,9 +40,10 @@ export function MapPage() {
     key: 'map.basemap',
     defaultValue: null,
   })
-  const [hidden, setHidden] = useLocalStorage<number[]>({
-    key: 'map.hiddenOverlays',
-    defaultValue: [],
+  // The viewer's own overlay toggles; overlays never toggled follow their visible_by_default.
+  const [overlayToggles, setOverlayToggles] = useLocalStorage<Record<string, boolean>>({
+    key: 'map.overlayVisibility',
+    defaultValue: {},
   })
   const [showSectors, setShowSectors] = useLocalStorage({ key: 'map.sectors', defaultValue: true })
   const [showLabels, setShowLabels] = useLocalStorage({ key: 'map.labels', defaultValue: true })
@@ -50,7 +56,15 @@ export function MapPage() {
   const sites = useMemo(() => inventory.data ?? [], [inventory.data])
   const carriers = useMemo(() => assignCarrierColors(sites.flatMap((s) => s.cells)), [sites])
   const basemap = basemaps.data?.find((b) => b.id === basemapId) ?? null
-  const hiddenSet = useMemo(() => new Set(hidden), [hidden])
+  const hiddenSet = useMemo(
+    () =>
+      new Set(
+        (overlays.data ?? [])
+          .filter((o) => !(overlayToggles[o.id] ?? o.visible_by_default))
+          .map((o) => o.id),
+      ),
+    [overlays.data, overlayToggles],
+  )
   const visibleOverlays = useMemo(
     () => (overlays.data ?? []).filter((o) => !hiddenSet.has(o.id)),
     [overlays.data, hiddenSet],
@@ -100,10 +114,8 @@ export function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inventory.data, basemaps.isPending])
 
-  const padding = useMemo(
-    () => ({ top: 60, bottom: 20, left: 20, right: selection ? PANEL_WIDTH + 24 : 20 }),
-    [selection !== null], // eslint-disable-line react-hooks/exhaustive-deps
-  )
+  const panelOpen = selection !== null
+  const padding = useMemo(() => paddingFor(panelOpen), [panelOpen])
 
   const select = (next: Selection) => {
     const nextParams = new URLSearchParams()
@@ -112,10 +124,14 @@ export function MapPage() {
   }
 
   const onPick = (hit: SearchHit) => {
+    const target: Selection =
+      hit.type === 'site' || hit.type === 'cell' ? { type: hit.type, id: hit.id } : null
+    const opensPanel = target !== null
     if (hit.lat != null && hit.lon != null) {
-      setFlyTo({ lon: hit.lon, lat: hit.lat, key: Date.now() })
+      // The URL (and so the panel) updates asynchronously: pass the future padding explicitly.
+      setFlyTo({ lon: hit.lon, lat: hit.lat, key: Date.now(), padding: paddingFor(opensPanel) })
     }
-    if (hit.type === 'site' || hit.type === 'cell') select({ type: hit.type, id: hit.id })
+    if (target) select(target)
   }
 
   return (
@@ -147,7 +163,7 @@ export function MapPage() {
           overlays={overlays.data ?? []}
           hiddenOverlays={hiddenSet}
           onToggleOverlay={(id) =>
-            setHidden(hiddenSet.has(id) ? hidden.filter((h) => h !== id) : [...hidden, id])
+            setOverlayToggles({ ...overlayToggles, [id]: hiddenSet.has(id) })
           }
           showSectors={showSectors}
           onShowSectors={setShowSectors}

@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: dtat
+          POSTGRES_PASSWORD: dtat
+          POSTGRES_DB: dtat_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dtat -d dtat_test"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://dtat:dtat@localhost:5432/dtat_test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - run: uv sync --frozen
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Lint
+        run: uv run ruff check .
+      - name: Types
+        run: uv run mypy src tests
+      - name: Tests
+        run: uv run pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Format
+        run: npm run format:check
+      - name: Types
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: API types match the backend
+        run: |
+          (cd ../backend && uv sync --frozen)
+          npm run gen:api
+          git diff --exit-code -- src/api
+      - name: Build
+        run: npm run build
+
+  images:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          docker build -t dtat-api:ci backend
+          docker build -t dtat-web:ci frontend

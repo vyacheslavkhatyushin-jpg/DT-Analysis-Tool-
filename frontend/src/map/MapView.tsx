@@ -29,7 +29,9 @@ function registerPmtiles() {
   protocolRegistered = true
 }
 
-export type FlyTarget = { lon: number; lat: number; zoom?: number; key: number }
+export type Padding = { top: number; right: number; bottom: number; left: number }
+/** `padding` overrides the current one, e.g. for a panel that opens together with the fly-to. */
+export type FlyTarget = { lon: number; lat: number; zoom?: number; key: number; padding?: Padding }
 export type InitialView = { bounds: Bounds } | { lon: number; lat: number; zoom: number }
 
 type Props = {
@@ -38,7 +40,7 @@ type Props = {
   initialView: InitialView | null
   flyTo: FlyTarget | null
   /** Space covered by floating panels, kept clear when centering. */
-  padding: { top: number; right: number; bottom: number; left: number }
+  padding: Padding
   onSelect: (selection: Selection) => void
 }
 
@@ -50,6 +52,7 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
     onSelectRef.current = onSelect
   })
   const fittedRef = useRef(false)
+  const styleRef = useRef(style)
 
   useEffect(() => {
     if (!container.current) return
@@ -83,6 +86,8 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
       map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''))
     }
 
+    map.once('load', () => map.setStyle(styleRef.current, { diff: true }))
+
     mapRef.current = map
     return () => {
       map.remove()
@@ -91,8 +96,12 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
     // The map is created once; later style changes are applied as diffs below.
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Style changes are applied as diffs once the initial style has loaded;
+  // changes that arrive earlier are picked up by the 'load' handler.
   useEffect(() => {
-    mapRef.current?.setStyle(style, { diff: true })
+    styleRef.current = style
+    const map = mapRef.current
+    if (map?.isStyleLoaded()) map.setStyle(style, { diff: true })
   }, [style])
 
   useEffect(() => {
@@ -117,7 +126,7 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
     map.flyTo({
       center: [flyTo.lon, flyTo.lat],
       zoom: Math.max(map.getZoom(), flyTo.zoom ?? 15),
-      padding,
+      padding: flyTo.padding ?? padding,
     })
     // Only a new target should move the map, not a padding change.
   }, [flyTo]) // eslint-disable-line react-hooks/exhaustive-deps

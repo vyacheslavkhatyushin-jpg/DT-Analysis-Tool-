@@ -1,0 +1,18 @@
+# Development database only (the API and the UI run on the host, see docs/DEVELOPMENT.md):
+#   docker compose -f deploy/docker-compose.dev.yml up -d
+name: dtat-dev
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_USER: dtat
+      POSTGRES_PASSWORD: dtat
+      POSTGRES_DB: dtat
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dev-db-data:/home/postgres/pgdata
+
+volumes:
+  dev-db-data:

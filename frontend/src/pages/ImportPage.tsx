@@ -21,6 +21,7 @@ import { useAuth } from '../auth/context'
 import { notifyError, notifySaved } from '../components/confirm'
 import { EffectiveAtInput } from '../forms/common'
 import { toIso } from '../forms/values'
+import { OverlaysCard } from './OverlaysCard'
 import { Page } from './PageLayout'
 
 async function upload(
@@ -74,7 +75,7 @@ export function ImportPage() {
   return (
     <Page
       title="Импорт и экспорт"
-      description="Инвентарь в Excel: выгрузка, шаблон и загрузка с предварительной проверкой."
+      description="Инвентарь в Excel: выгрузка, шаблон и загрузка с предварительной проверкой. Слои карты в GeoJSON."
     >
       <SimpleGrid cols={{ base: 1, md: 2 }}>
         <Card withBorder>
@@ -156,6 +157,7 @@ export function ImportPage() {
         </Card>
       </SimpleGrid>
       {report && <ImportResult report={report} />}
+      <OverlaysCard />
     </Page>
   )
 }

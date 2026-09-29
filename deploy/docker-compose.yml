@@ -1,0 +1,65 @@
+# Production stack. Images come from a release bundle (see docs/DEPLOYMENT.md);
+# docker-compose.build.yml adds build contexts for building them from source.
+name: dtat
+
+x-api-env: &api-env
+  DTAT_DATABASE_URL: postgresql+psycopg://dtat:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/dtat
+  DTAT_SECRET_KEY: ${DTAT_SECRET_KEY:?set DTAT_SECRET_KEY in .env}
+  DTAT_COOKIE_SECURE: ${DTAT_COOKIE_SECURE:-true}
+  DTAT_TILES_DIR: /srv/tiles
+  DTAT_INITIAL_ADMIN_USERNAME: ${DTAT_INITIAL_ADMIN_USERNAME:-admin}
+  DTAT_INITIAL_ADMIN_PASSWORD: ${DTAT_INITIAL_ADMIN_PASSWORD:-}
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dtat
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: dtat
+    volumes:
+      - db-data:/home/postgres/pgdata
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dtat", "-d", "dtat"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # One-shot: applies migrations and creates the first admin, then exits.
+  migrate:
+    image: dtat-api:${DTAT_VERSION:-latest}
+    command: ["sh", "-c", "dtat migrate && dtat bootstrap"]
+    environment: *api-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: dtat-api:${DTAT_VERSION:-latest}
+    restart: unless-stopped
+    environment: *api-env
+    volumes:
+      - ./data/tiles:/srv/tiles:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    image: dtat-web:${DTAT_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      DTAT_HTTPS_PORT: ${DTAT_HTTPS_PORT:-443}
+    ports:
+      - "${DTAT_HTTP_PORT:-80}:80"
+      - "${DTAT_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./data/tiles:/srv/tiles:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+
+volumes:
+  db-data:
