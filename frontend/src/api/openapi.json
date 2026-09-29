@@ -2181,6 +2181,17 @@
             "type": "integer",
             "title": "Enodeb Id"
           },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
           "local_cell_id": {
             "type": "integer",
             "maximum": 255.0,
@@ -2383,6 +2394,14 @@
             "type": "string",
             "title": "Site Code"
           },
+          "enodeb_site_id": {
+            "type": "integer",
+            "title": "Enodeb Site Id"
+          },
+          "enodeb_site_code": {
+            "type": "string",
+            "title": "Enodeb Site Code"
+          },
           "local_cell_id": {
             "type": "integer",
             "title": "Local Cell Id"
@@ -2433,6 +2452,8 @@
           "enb_id",
           "site_id",
           "site_code",
+          "enodeb_site_id",
+          "enodeb_site_code",
           "local_cell_id",
           "eci",
           "band",
@@ -2466,6 +2487,17 @@
               }
             ],
             "title": "Enodeb Id"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
           },
           "local_cell_id": {
             "anyOf": [

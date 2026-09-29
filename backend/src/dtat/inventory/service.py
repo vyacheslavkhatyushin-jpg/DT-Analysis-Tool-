@@ -240,6 +240,8 @@ def delete_site(session: Session, actor: Actor, site_id: int) -> None:
     site = get_site(session, site_id)
     if site.enodebs:
         raise ConflictError("На сайте есть eNodeB: сначала удалите или перенесите их")
+    if site.cells:
+        raise ConflictError("На сайте установлены соты: сначала удалите или перенесите их")
     record_change(
         session,
         actor,
@@ -329,7 +331,8 @@ def update_enodeb(
     session.flush()
     session.refresh(enodeb, ["site"])
 
-    if "enb_id" in changes or "site_id" in changes:
+    # Moving the eNodeB (baseband) does not move its cells: they keep their own site.
+    if "enb_id" in changes:
         for cell in enodeb.cells:
             cell.eci = make_eci(enodeb.enb_id, cell.local_cell_id)
             session.flush()
@@ -369,13 +372,16 @@ def delete_enodeb(session: Session, actor: Actor, enodeb_id: int) -> None:
 
 
 def _cells_query() -> Select[Cell]:
-    return select(Cell).options(joinedload(Cell.enodeb).joinedload(ENodeB.site))
+    return select(Cell).options(
+        joinedload(Cell.enodeb).joinedload(ENodeB.site), joinedload(Cell.site)
+    )
 
 
 def list_cells(session: Session, site_id: int | None = None) -> Sequence[Cell]:
+    """All cells, or the cells installed on `site_id` (whatever site their eNodeB is on)."""
     query = _cells_query().join(Cell.enodeb).order_by(ENodeB.enb_id, Cell.local_cell_id)
     if site_id is not None:
-        query = query.where(ENodeB.site_id == site_id)
+        query = query.where(Cell.site_id == site_id)
     return session.scalars(query).unique().all()
 
 
@@ -404,11 +410,7 @@ def _band_or_error(earfcn_dl: int) -> int:
 
 
 def _version_snapshot(cell: Cell) -> dict[str, Any]:
-    return {
-        **_snapshot(cell, CELL_VERSIONED_FIELDS),
-        "site_id": cell.enodeb.site_id,
-        "enb_id": cell.enodeb.enb_id,
-    }
+    return {**_snapshot(cell, CELL_VERSIONED_FIELDS), "enb_id": cell.enodeb.enb_id}
 
 
 def _sync_cell_version(session: Session, cell: Cell, at: datetime) -> None:
@@ -433,10 +435,18 @@ def create_cell(session: Session, actor: Actor, data: CellCreate) -> Cell:
         f"Сота с eNB ID {enodeb.enb_id} / Cell ID {data.local_cell_id} (ECI {eci}) уже существует",
     )
     _ensure_unique(session, Cell.name, data.name, f"Сота с именем {data.name} уже существует")
-    cell = Cell(**data.model_dump(), eci=eci, band=_band_or_error(data.earfcn_dl))
+    # By default the antenna is installed where the eNodeB is.
+    site_id = data.site_id if data.site_id is not None else enodeb.site_id
+    get_site(session, site_id)
+    cell = Cell(
+        **data.model_dump(exclude={"site_id"}),
+        site_id=site_id,
+        eci=eci,
+        band=_band_or_error(data.earfcn_dl),
+    )
     session.add(cell)
     session.flush()
-    session.refresh(cell, ["enodeb"])
+    session.refresh(cell, ["enodeb", "site"])
     # As with sites, the first known configuration is assumed valid since forever.
     session.add(
         CellVersion(cell_id=cell.id, valid_period=Range(None, None), **_version_snapshot(cell))
@@ -460,9 +470,11 @@ def update_cell(
     cell = get_cell(session, cell_id)
     at = effective_time(data.effective_at)
     values = data.model_dump(exclude_unset=True, exclude={"effective_at"})
-    _reject_nulls(values, ("enodeb_id", "local_cell_id", "status", "pci", "earfcn_dl"))
+    _reject_nulls(values, ("enodeb_id", "site_id", "local_cell_id", "status", "pci", "earfcn_dl"))
 
     # Validate everything before touching the object: queries below autoflush pending changes.
+    if values.get("site_id", cell.site_id) != cell.site_id:
+        get_site(session, values["site_id"])
     enodeb = cell.enodeb
     if values.get("enodeb_id", cell.enodeb_id) != cell.enodeb_id:
         enodeb = get_enodeb(session, values["enodeb_id"])
@@ -485,7 +497,7 @@ def update_cell(
     if not changes:
         return cell, False
     session.flush()
-    session.refresh(cell, ["enodeb"])
+    session.refresh(cell, ["enodeb", "site"])
     _sync_cell_version(session, cell, at)
     record_change(
         session,
@@ -770,10 +782,9 @@ def delete_overlay(session: Session, actor: Actor, overlay_id: int) -> None:
 
 
 def sites_with_cells(session: Session) -> Sequence[Site]:
+    """Sites with the cells installed on them (and each cell's eNodeB)."""
     return session.scalars(
-        select(Site)
-        .options(selectinload(Site.enodebs).selectinload(ENodeB.cells))
-        .order_by(Site.code)
+        select(Site).options(selectinload(Site.cells).joinedload(Cell.enodeb)).order_by(Site.code)
     ).all()
 
 
@@ -808,7 +819,7 @@ def search(session: Session, q: str, limit: int = 20) -> list[SearchHit]:
         _cells_query().join(Cell.enodeb).where(cell_filter).order_by(Cell.eci).limit(limit)
     ).unique()
     for cell in cells:
-        site = cell.enodeb.site
+        site = cell.site
         hits.append(
             SearchHit(
                 type="cell",

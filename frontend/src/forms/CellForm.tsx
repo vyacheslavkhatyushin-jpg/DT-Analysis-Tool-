@@ -23,6 +23,7 @@ type Props = { cell: Cell | null; enodebId?: number; opened: boolean; onClose: (
 
 type Values = {
   enodeb_id: string | null
+  site_id: string | null
   local_cell_id: NumberValue
   name: string
   status: Cell['status']
@@ -66,6 +67,7 @@ function CellFormBody({ cell, enodebId, onClose }: Omit<Props, 'opened'>) {
   const form = useForm<Values>({
     initialValues: {
       enodeb_id: String(cell?.enodeb_id ?? enodebId ?? '') || null,
+      site_id: cell ? String(cell.site_id) : null,
       local_cell_id: numOrEmpty(cell?.local_cell_id),
       name: cell?.name ?? '',
       status: cell?.status ?? 'active',
@@ -111,15 +113,21 @@ function CellFormBody({ cell, enodebId, onClose }: Omit<Props, 'opened'>) {
       beamwidth_deg: num(values.beamwidth_deg),
       notes: text(values.notes),
     }
+    // An empty installation site means "where the eNodeB is".
+    const siteId = values.site_id ? Number(values.site_id) : null
     if (cell) {
       return unwrap(
         api.PATCH('/api/v1/cells/{cell_id}', {
           params: { path: { cell_id: cell.id } },
-          body: { ...body, effective_at: toIso(effectiveAt) },
+          body: {
+            ...body,
+            site_id: siteId ?? cell.enodeb_site_id,
+            effective_at: toIso(effectiveAt),
+          },
         }),
       )
     }
-    return unwrap(api.POST('/api/v1/cells', { body }))
+    return unwrap(api.POST('/api/v1/cells', { body: { ...body, site_id: siteId } }))
   })
 
   const enodebOptions = (enodebs.data ?? []).map((e) => ({
@@ -163,6 +171,17 @@ function CellFormBody({ cell, enodebId, onClose }: Omit<Props, 'opened'>) {
         <Text size="xs" c="dimmed">
           ECI = eNB ID × 256 + Cell ID{eci !== null ? ` = ${eci}` : ''}
         </Text>
+        <Select
+          label="Сайт установки антенны"
+          description="Для выносных секторов и DAS в другом здании. Пусто — сайт eNodeB"
+          placeholder={
+            selectedEnb ? `сайт eNodeB: ${siteCode.get(selectedEnb.site_id) ?? '?'}` : 'сайт eNodeB'
+          }
+          searchable
+          clearable
+          data={(sites.data ?? []).map((s) => ({ value: String(s.id), label: s.code }))}
+          {...form.getInputProps('site_id')}
+        />
         <Divider label="Радио" labelPosition="left" />
         <SimpleGrid cols={3}>
           <NumberInput label="PCI" required min={0} max={503} {...form.getInputProps('pci')} />

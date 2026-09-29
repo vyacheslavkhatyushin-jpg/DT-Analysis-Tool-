@@ -15,7 +15,14 @@ import { Page } from './PageLayout'
 
 const columns: Column<Cell>[] = [
   { key: 'name', header: 'Сота', value: (c) => c.name, render: (c) => <b>{c.name ?? '—'}</b> },
-  { key: 'site', header: 'Сайт', value: (c) => c.site_code },
+  {
+    key: 'site',
+    header: 'Сайт',
+    value: (c) => c.site_code,
+    // Remote sectors: the antenna site differs from the eNodeB site.
+    render: (c) =>
+      c.site_id !== c.enodeb_site_id ? `${c.site_code} (eNB ${c.enodeb_site_code})` : c.site_code,
+  },
   { key: 'enb', header: 'eNB ID', value: (c) => c.enb_id, align: 'right' },
   { key: 'cid', header: 'Cell ID', value: (c) => c.local_cell_id, align: 'right' },
   { key: 'eci', header: 'ECI', value: (c) => c.eci, align: 'right' },

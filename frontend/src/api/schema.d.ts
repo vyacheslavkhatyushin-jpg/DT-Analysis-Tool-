@@ -640,6 +640,8 @@ export interface components {
             notes?: string | null;
             /** Enodeb Id */
             enodeb_id: number;
+            /** Site Id */
+            site_id?: number | null;
             /** Local Cell Id */
             local_cell_id: number;
         };
@@ -685,6 +687,10 @@ export interface components {
             site_id: number;
             /** Site Code */
             site_code: string;
+            /** Enodeb Site Id */
+            enodeb_site_id: number;
+            /** Enodeb Site Code */
+            enodeb_site_code: string;
             /** Local Cell Id */
             local_cell_id: number;
             /** Eci */
@@ -710,6 +716,8 @@ export interface components {
             effective_at?: string | null;
             /** Enodeb Id */
             enodeb_id?: number | null;
+            /** Site Id */
+            site_id?: number | null;
             /** Local Cell Id */
             local_cell_id?: number | null;
             /** Name */

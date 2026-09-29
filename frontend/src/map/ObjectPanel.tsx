@@ -68,8 +68,18 @@ function Field({ label, value }: { label: string; value: unknown }) {
 function SitePanel({ siteId, onSelect }: { siteId: number; onSelect: (s: Selection) => void }) {
   const { canEdit } = useAuth()
   const site = useSites().data?.find((s) => s.id === siteId)
-  const enodebs = (useENodeBs().data ?? []).filter((e) => e.site_id === siteId)
-  const cells = (useCells().data ?? []).filter((c) => c.site_id === siteId)
+  const allEnodebs = useENodeBs().data ?? []
+  const allCells = useCells().data ?? []
+  // Cells installed on this site, grouped by eNodeB: this site's own eNodeBs first, then eNodeBs
+  // of other sites whose remote sectors are installed here.
+  const cells = allCells.filter((c) => c.site_id === siteId)
+  const groupIds = [
+    ...allEnodebs.filter((e) => e.site_id === siteId).map((e) => e.id),
+    ...cells.map((c) => c.enodeb_id),
+  ].filter((id, i, ids) => ids.indexOf(id) === i)
+  const enodebs = groupIds
+    .map((id) => allEnodebs.find((e) => e.id === id))
+    .filter((e): e is ENodeB => e !== undefined)
   const positions = useSitePositions(siteId)
   const [editSite, setEditSite] = useState<Site | null>(null)
   const [editEnodeb, setEditEnodeb] = useState<{ enodeb: ENodeB | null } | null>(null)
@@ -127,10 +137,18 @@ function SitePanel({ siteId, onSelect }: { siteId: number; onSelect: (s: Selecti
           <Tabs.Panel value="cells" pt="xs">
             {enodebs.map((enodeb) => (
               <Stack key={enodeb.id} gap={4} mb="sm">
-                <Group justify="space-between">
-                  <Text size="sm" fw={600}>
-                    eNB {enodeb.enb_id} {enodeb.name ? `· ${enodeb.name}` : ''}
-                  </Text>
+                <Group justify="space-between" wrap="nowrap">
+                  <Stack gap={0}>
+                    <Text size="sm" fw={600}>
+                      eNB {enodeb.enb_id} {enodeb.name ? `· ${enodeb.name}` : ''}
+                    </Text>
+                    {enodeb.site_id !== siteId && (
+                      <Text size="xs" c="dimmed">
+                        выносные секторы, eNodeB на сайте{' '}
+                        {cells.find((c) => c.enodeb_id === enodeb.id)?.enodeb_site_code}
+                      </Text>
+                    )}
+                  </Stack>
                   {canEdit && (
                     <Group gap={2}>
                       <Tooltip label="Изменить eNodeB">
@@ -184,6 +202,10 @@ function SitePanel({ siteId, onSelect }: { siteId: number; onSelect: (s: Selecti
                       ))}
                   </Table.Tbody>
                 </Table>
+                <RemoteCells
+                  cells={allCells.filter((c) => c.enodeb_id === enodeb.id && c.site_id !== siteId)}
+                  onSelect={onSelect}
+                />
               </Stack>
             ))}
             {enodebs.length === 0 && (
@@ -236,6 +258,29 @@ function SitePanel({ siteId, onSelect }: { siteId: number; onSelect: (s: Selecti
   )
 }
 
+/** Cells of an eNodeB that are installed on other sites (remote sectors, DAS elsewhere). */
+function RemoteCells({ cells, onSelect }: { cells: Cell[]; onSelect: (s: Selection) => void }) {
+  if (cells.length === 0) return null
+  return (
+    <Text size="xs" c="dimmed">
+      Выносные соты этого eNodeB:{' '}
+      {cells.map((cell, i) => (
+        <Text
+          span
+          size="xs"
+          c="blue"
+          key={cell.id}
+          style={{ cursor: 'pointer' }}
+          onClick={() => onSelect({ type: 'cell', id: cell.id })}
+        >
+          {i > 0 ? ', ' : ''}
+          {cell.name ?? cell.local_cell_id} ({cell.site_code})
+        </Text>
+      ))}
+    </Text>
+  )
+}
+
 function CellPanel({ cellId, onSelect }: { cellId: number; onSelect: (s: Selection) => void }) {
   const { canEdit } = useAuth()
   const cell = useCells().data?.find((c) => c.id === cellId)
@@ -270,6 +315,20 @@ function CellPanel({ cellId, onSelect }: { cellId: number; onSelect: (s: Selecti
         >
           Сайт {cell.site_code}
         </Text>
+        {cell.enodeb_site_id !== cell.site_id && (
+          <Text size="xs" c="dimmed">
+            Выносной сектор: eNodeB на сайте{' '}
+            <Text
+              span
+              size="xs"
+              c="blue"
+              style={{ cursor: 'pointer' }}
+              onClick={() => onSelect({ type: 'site', id: cell.enodeb_site_id })}
+            >
+              {cell.enodeb_site_code}
+            </Text>
+          </Text>
+        )}
         <Group gap={6}>
           {cell.band !== null && (
             <Badge variant="light" color="gray">

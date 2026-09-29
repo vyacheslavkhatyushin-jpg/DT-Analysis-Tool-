@@ -101,6 +101,39 @@ def seed_demo(
         typer.echo(f"  {note}")
 
 
+@app.command("convert-kcell")
+def convert_kcell(
+    source: Path,
+    target: Path,
+    position: Annotated[
+        list[str] | None,
+        typer.Option(help="Координаты выносной площадки: КОД=ШИРОТА,ДОЛГОТА (можно несколько)"),
+    ] = None,
+) -> None:
+    """Convert an operator's Site Data workbook (Kcell layout) into the import template."""
+    from dtat.inventory.kcell import convert, write_template
+
+    positions: dict[str, tuple[float, float]] = {}
+    for item in position or []:
+        code, _, coords = item.partition("=")
+        lat, _, lon = coords.partition(",")
+        try:
+            positions[code.strip()] = (float(lat), float(lon))
+        except ValueError as exc:
+            raise typer.BadParameter(f"ожидается КОД=ШИРОТА,ДОЛГОТА: {item}") from exc
+    try:
+        with source.open("rb") as file:
+            result = convert(file, positions)
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+    target.write_bytes(write_template(result))
+    typer.echo(
+        f"Сайтов: {len(result.sites)}, сот: {len(result.cells)} "
+        f"(выносных: {result.remote_cells}) → {target}"
+    )
+
+
 @app.command()
 def openapi(output: Annotated[Path | None, typer.Argument()] = None) -> None:
     """Print or save the OpenAPI schema (used to generate frontend types)."""
