@@ -204,13 +204,28 @@ export function buildStyle(data: MapData): StyleSpecification {
       paint: { 'text-color': INK, 'text-halo-color': HALO, 'text-halo-width': 1.5 },
     },
     {
+      // KPI mode at network zoom: sectors are too small, the site shows its worst cell.
+      id: 'sites-kpi',
+      type: 'circle',
+      source: 'sites',
+      maxzoom: 14,
+      filter: ['has', 'kpiColor'],
+      paint: {
+        'circle-radius': ['get', 'kpiRadius'],
+        'circle-color': ['get', 'kpiColor'],
+        'circle-stroke-color': HALO,
+        'circle-stroke-width': 1.5,
+      },
+    },
+    {
       // Mobile sites get an outer ring: shape, not color, carries the site kind.
       id: 'sites-mobile-ring',
       type: 'circle',
       source: 'sites',
       filter: ['==', ['get', 'kind'], 'mobile'],
       paint: {
-        'circle-radius': 9,
+        // Outside the KPI mark when there is one.
+        'circle-radius': ['case', ['has', 'kpiColor'], ['+', ['get', 'kpiRadius'], 3], 9],
         'circle-color': 'rgba(0,0,0,0)',
         'circle-stroke-color': INK,
         'circle-stroke-width': 1.5,

@@ -32,6 +32,7 @@ import { useAuth } from '../auth/context'
 import { ChangeHistory } from '../components/ChangeHistory'
 import { confirmDelete, notifyError, notifySaved } from '../components/confirm'
 import { CellForm } from '../forms/CellForm'
+import { CellKpiTab } from '../kpi/CellKpiTab'
 import { ENodeBForm } from '../forms/ENodeBForm'
 import { SiteForm } from '../forms/SiteForm'
 import { formatDateTime, formatValue, SITE_KIND_LABELS, STATUS_LABELS } from '../labels'
@@ -379,12 +380,16 @@ function CellPanel({ cellId, onSelect }: { cellId: number; onSelect: (s: Selecti
           </Button>
         </Group>
       )}
-      <Tabs defaultValue="versions" style={{ flex: 1, minHeight: 0 }}>
+      <Tabs defaultValue="kpi" style={{ flex: 1, minHeight: 0 }}>
         <Tabs.List>
-          <Tabs.Tab value="versions">Версии конфигурации</Tabs.Tab>
+          <Tabs.Tab value="kpi">KPI</Tabs.Tab>
+          <Tabs.Tab value="versions">Версии</Tabs.Tab>
           <Tabs.Tab value="history">Журнал</Tabs.Tab>
         </Tabs.List>
         <ScrollArea h="calc(100% - 40px)">
+          <Tabs.Panel value="kpi" pt="xs">
+            <CellKpiTab cellId={cell.id} />
+          </Tabs.Panel>
           <Tabs.Panel value="versions" pt="xs">
             <Table fz="xs" verticalSpacing={4}>
               <Table.Thead>

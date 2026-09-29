@@ -5,6 +5,7 @@ import {
   ColorSwatch,
   Divider,
   Group,
+  SegmentedControl,
   Select,
   Slider,
   Stack,
@@ -15,7 +16,9 @@ import { useLocalStorage } from '@mantine/hooks'
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 
-import type { Basemap, Overlay } from '../api/hooks'
+import type { Basemap, KpiDef, KpiSummary, Overlay } from '../api/hooks'
+import { formatPeriod, KEY_KPIS, LEVEL_LABELS, levelRanges, type Statistic } from '../kpi/kpi'
+import { LevelDot } from '../kpi/KpiValue'
 import type { Carrier } from './carriers'
 import { INK, MUTED } from './style'
 
@@ -33,6 +36,12 @@ type Props = {
   sectorRadius: number
   onSectorRadius: (value: number) => void
   carriers: Carrier[]
+  colorBy: string
+  onColorBy: (value: string) => void
+  statistic: Statistic
+  onStatistic: (value: Statistic) => void
+  kpiDefs: KpiDef[]
+  kpiPeriod: KpiSummary | undefined
 }
 
 export function LayersPanel(props: Props) {
@@ -95,9 +104,39 @@ function LayersBody(props: Props) {
         checked={props.showSectors}
         onChange={(e) => props.onShowSectors(e.currentTarget.checked)}
       />
+      <Select
+        label="Цвет секторов"
+        size="xs"
+        data={[
+          { value: 'carrier', label: 'Несущая (EARFCN)' },
+          {
+            group: 'KPI оператора',
+            items: KEY_KPIS.map((code) => props.kpiDefs.find((d) => d.code === code))
+              .filter((d): d is KpiDef => d !== undefined && d.better !== null)
+              .map((d) => ({ value: d.code, label: d.title })),
+          },
+        ]}
+        value={props.colorBy}
+        onChange={(v) => props.onColorBy(v ?? 'carrier')}
+        allowDeselect={false}
+      />
+      {props.colorBy !== 'carrier' && (
+        <SegmentedControl
+          size="xs"
+          fullWidth
+          data={[
+            { value: 'value', label: 'За период' },
+            { value: 'worst', label: 'Худший час' },
+          ]}
+          value={props.statistic}
+          onChange={(v) => props.onStatistic(v as Statistic)}
+        />
+      )}
       <Switch
         size="xs"
-        label="Подписи (код сайта, PCI)"
+        label={
+          props.colorBy === 'carrier' ? 'Подписи (код сайта, PCI)' : 'Подписи (код сайта, KPI)'
+        }
         checked={props.showLabels}
         onChange={(e) => props.onShowLabels(e.currentTarget.checked)}
       />
@@ -114,7 +153,40 @@ function LayersBody(props: Props) {
         />
       </div>
       <Divider />
-      <Legend carriers={props.carriers} />
+      {props.colorBy === 'carrier' ? (
+        <Legend carriers={props.carriers} />
+      ) : (
+        <KpiLegend
+          def={props.kpiDefs.find((d) => d.code === props.colorBy)}
+          summary={props.kpiPeriod}
+        />
+      )}
+    </Stack>
+  )
+}
+
+function KpiLegend({ def, summary }: { def: KpiDef | undefined; summary: KpiSummary | undefined }) {
+  const ranges = def ? levelRanges(def) : null
+  return (
+    <Stack gap={4}>
+      <Text size="xs" fw={600}>
+        {def?.title ?? 'KPI'}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {summary ? formatPeriod(summary.start, summary.end) : 'загрузка…'}
+      </Text>
+      {(['ok', 'warn', 'bad'] as const).map((level) => (
+        <LegendRow
+          key={level}
+          symbol={<LevelDot level={level} size={12} />}
+          label={`${LEVEL_LABELS[level]}${ranges ? `: ${ranges[level]}` : ''}`}
+        />
+      ))}
+      <LegendRow symbol={<LevelDot level={null} size={12} />} label="нет данных" />
+      <Text size="xs" c="dimmed">
+        При отдалении точка сайта показывает худшую из его сот: чем крупнее, тем хуже. Период —
+        последние 7 дней статистики, подробнее на странице «KPI сети».
+      </Text>
     </Stack>
   )
 }

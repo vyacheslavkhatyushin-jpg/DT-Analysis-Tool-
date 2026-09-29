@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, type Schemas, unwrap } from './client'
 
@@ -17,6 +17,15 @@ export type Overlay = Schemas['MapOverlayRead']
 export type User = Schemas['UserRead']
 export type SearchHit = Schemas['SearchHit']
 export type ImportReport = Schemas['ImportReport']
+export type KpiDef = Schemas['KpiDefRead']
+export type KpiSummary = Schemas['KpiSummaryRead']
+export type KpiCellStats = Schemas['KpiCellStatsRead']
+export type KpiStat = Schemas['KpiStatRead']
+export type KpiLevel = NonNullable<KpiStat['level']>
+export type KpiImport = Schemas['KpiImportRead']
+export type KpiSeries = Schemas['KpiSeriesRead']
+export type KpiReconciliation = Schemas['ReconciliationRead']
+export type KpiPeriod = { start: string; end: string }
 
 // Every inventory query lives under this prefix: any edit refreshes all of them.
 // The inventory is small (tens of sites), so precise invalidation is not worth the complexity.
@@ -110,6 +119,47 @@ export const useSearch = (q: string) =>
     queryFn: () => unwrap(api.GET('/api/v1/search', { params: { query: { q } } })),
     enabled: q.trim().length > 0,
     staleTime: 10_000,
+  })
+
+export const useKpiCatalogue = () =>
+  useQuery({
+    queryKey: ['kpi-catalogue'],
+    queryFn: () => unwrap(api.GET('/api/v1/kpi/catalogue')),
+    staleTime: Infinity,
+  })
+
+// Statistics are linked to inventory cells by name: they live under the inventory prefix,
+// so renaming or linking a cell refreshes them too.
+export const useKpiSummary = (period: KpiPeriod | null, enabled = true) =>
+  useQuery({
+    queryKey: [INVENTORY, 'kpi', 'summary', period],
+    queryFn: () => unwrap(api.GET('/api/v1/kpi/summary', { params: { query: period ?? {} } })),
+    placeholderData: keepPreviousData,
+    enabled,
+  })
+
+export const useKpiSeries = (cellId: number, period: KpiPeriod | null) =>
+  useQuery({
+    queryKey: [INVENTORY, 'kpi', 'series', cellId, period],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/cells/{cell_id}/kpi', {
+          params: { path: { cell_id: cellId }, query: period ?? {} },
+        }),
+      ),
+    placeholderData: keepPreviousData,
+  })
+
+export const useKpiReconciliation = () =>
+  useQuery({
+    queryKey: [INVENTORY, 'kpi', 'reconciliation'],
+    queryFn: () => unwrap(api.GET('/api/v1/kpi/reconciliation')),
+  })
+
+export const useKpiFiles = () =>
+  useQuery({
+    queryKey: [INVENTORY, 'kpi', 'files'],
+    queryFn: () => unwrap(api.GET('/api/v1/kpi/files')),
   })
 
 /** Mutation that refreshes all inventory queries on success. */

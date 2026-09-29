@@ -1,12 +1,21 @@
 import type { Feature, FeatureCollection, Point, Polygon } from 'geojson'
 
-import type { MapSite } from '../api/hooks'
-import type { Carrier } from './carriers'
+import type { MapCell, MapSite } from '../api/hooks'
 import { circleRing, destination, type LonLat, sectorRing } from './geo'
 
 const DEFAULT_BEAMWIDTH = 65
 
-export type SiteProps = { siteId: number; code: string; name: string; kind: string; status: string }
+export type SiteProps = {
+  siteId: number
+  code: string
+  name: string
+  kind: string
+  status: string
+  // KPI mode: the worst state among the site's cells, shown when sectors are too small to see.
+  kpiColor?: string
+  kpiRadius?: number
+}
+export type SiteMark = { color: string; radius: number }
 export type SectorProps = {
   cellId: number
   siteId: number
@@ -18,27 +27,34 @@ export type SectorProps = {
 }
 export type CellLabelProps = { cellId: number; label: string }
 
-export function siteFeatures(sites: MapSite[]): FeatureCollection<Point, SiteProps> {
+export function siteFeatures(
+  sites: MapSite[],
+  markFor?: (site: MapSite) => SiteMark | null,
+): FeatureCollection<Point, SiteProps> {
   return {
     type: 'FeatureCollection',
-    features: sites.map((site) => ({
-      type: 'Feature',
-      id: site.id,
-      geometry: { type: 'Point', coordinates: [site.lon, site.lat] },
-      properties: {
-        siteId: site.id,
-        code: site.code,
-        name: site.name ?? '',
-        kind: site.kind,
-        status: site.status,
-      },
-    })),
+    features: sites.map((site) => {
+      const mark = markFor?.(site)
+      return {
+        type: 'Feature',
+        id: site.id,
+        geometry: { type: 'Point', coordinates: [site.lon, site.lat] },
+        properties: {
+          siteId: site.id,
+          code: site.code,
+          name: site.name ?? '',
+          kind: site.kind,
+          status: site.status,
+          ...(mark ? { kpiColor: mark.color, kpiRadius: mark.radius } : {}),
+        },
+      }
+    }),
   }
 }
 
 export function sectorFeatures(
   sites: MapSite[],
-  carriers: Map<number, Carrier>,
+  colorFor: (cell: MapCell) => string,
   radiusM: number,
 ): FeatureCollection<Polygon, SectorProps> {
   const features: Feature<Polygon, SectorProps>[] = []
@@ -65,7 +81,7 @@ export function sectorFeatures(
           name: cell.name ?? `ECI ${cell.eci}`,
           pci: cell.pci,
           earfcn: cell.earfcn_dl,
-          color: carriers.get(cell.earfcn_dl)?.color ?? '#898781',
+          color: colorFor(cell),
           status: cell.status,
         },
       })
@@ -77,6 +93,7 @@ export function sectorFeatures(
 export function cellLabelFeatures(
   sites: MapSite[],
   radiusM: number,
+  labelFor: (cell: MapCell) => string = (cell) => String(cell.pci),
 ): FeatureCollection<Point, CellLabelProps> {
   const features: Feature<Point, CellLabelProps>[] = []
   for (const site of sites) {
@@ -88,7 +105,7 @@ export function cellLabelFeatures(
           type: 'Point',
           coordinates: destination([site.lon, site.lat], cell.azimuth_deg, radiusM * 0.72),
         },
-        properties: { cellId: cell.id, label: String(cell.pci) },
+        properties: { cellId: cell.id, label: labelFor(cell) },
       })
     }
   }
