@@ -485,6 +485,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/kpi/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalogue */
+        get: operations["catalogue_api_v1_kpi_catalogue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpi/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Report
+         * @description Load an hourly per-cell KPI report; repeated hours replace the stored values.
+         */
+        post: operations["import_report_api_v1_kpi_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpi/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Files */
+        get: operations["list_files_api_v1_kpi_files_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpi/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description Every cell's KPI over the period: the value (see the catalogue) and the worst hour.
+         */
+        get: operations["summary_api_v1_kpi_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cells/{cell_id}/kpi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cell Series
+         * @description Hourly KPI values of an inventory cell.
+         */
+        get: operations["cell_series_api_v1_cells__cell_id__kpi_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpi/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reconciliation
+         * @description Differences between the operator's statistics and the inventory.
+         */
+        get: operations["reconciliation_api_v1_kpi_reconciliation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpi/operator-cells/{kpi_cell_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Link
+         * @description Link a statistics cell to an inventory cell (optionally renaming the inventory cell).
+         */
+        put: operations["link_api_v1_kpi_operator_cells__kpi_cell_id__link_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -506,6 +640,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Aggregate
+         * @enum {string}
+         */
+        Aggregate: "mean" | "traffic" | "sum";
         /** AssetCreate */
         AssetCreate: {
             /** @default other */
@@ -594,6 +733,11 @@ export interface components {
             /** Attribution */
             attribution: string | null;
         };
+        /**
+         * Better
+         * @enum {string}
+         */
+        Better: "high" | "low";
         /** Body_import_file_api_v1_inventory_import_post */
         Body_import_file_api_v1_inventory_import_post: {
             /** File */
@@ -605,6 +749,17 @@ export interface components {
             dry_run: boolean;
             /** Effective At */
             effective_at?: string | null;
+        };
+        /** Body_import_report_api_v1_kpi_import_post */
+        Body_import_report_api_v1_kpi_import_post: {
+            /** File */
+            file: string;
+            /**
+             * Timezone
+             * @description Часовой пояс времени в отчёте
+             * @default Asia/Almaty
+             */
+            timezone: string;
         };
         /** CellCreate */
         CellCreate: {
@@ -980,6 +1135,17 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
+        /** EnbNameDiffRead */
+        EnbNameDiffRead: {
+            /** Enodeb Id */
+            enodeb_id: number;
+            /** Enb Id */
+            enb_id: number;
+            /** Name */
+            name: string | null;
+            /** Kpi Name */
+            kpi_name: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -996,6 +1162,170 @@ export interface components {
             /** Total Errors */
             total_errors: number;
         };
+        /** InventoryCellRef */
+        InventoryCellRef: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string | null;
+            /** Enb Id */
+            enb_id: number;
+            /** Enodeb Name */
+            enodeb_name: string | null;
+            /** Site Code */
+            site_code: string;
+        };
+        /** KpiCellRead */
+        KpiCellRead: {
+            /** Id */
+            id: number;
+            /** Cell Name */
+            cell_name: string;
+            /** Enb Name */
+            enb_name: string | null;
+            /** Cell Id */
+            cell_id: number | null;
+        };
+        /** KpiCellStatsRead */
+        KpiCellStatsRead: {
+            /** Kpi Cell Id */
+            kpi_cell_id: number;
+            /** Cell Name */
+            cell_name: string;
+            /** Enb Name */
+            enb_name: string | null;
+            /** Cell Id */
+            cell_id: number | null;
+            /** Values */
+            values: {
+                [key: string]: components["schemas"]["KpiStatRead"];
+            };
+        };
+        /** KpiDefRead */
+        KpiDefRead: {
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Unit */
+            unit: string;
+            aggregate: components["schemas"]["Aggregate"];
+            better: components["schemas"]["Better"] | null;
+            /** Warn */
+            warn: number | null;
+            /** Bad */
+            bad: number | null;
+        };
+        /** KpiFileRead */
+        KpiFileRead: {
+            /** Id */
+            id: number;
+            /** Filename */
+            filename: string;
+            /** Sha256 */
+            sha256: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Timezone */
+            timezone: string;
+            /** Uploaded By */
+            uploaded_by: string;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+            /**
+             * Period Start
+             * Format: date-time
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date-time
+             */
+            period_end: string;
+            /** Cells */
+            cells: number;
+            /** Samples */
+            samples: number;
+        };
+        /** KpiImportRead */
+        KpiImportRead: {
+            file: components["schemas"]["KpiFileRead"];
+            /** Sheet */
+            sheet: string;
+            /** Kpis */
+            kpis: string[];
+            /** Unknown Columns */
+            unknown_columns: string[];
+            /** New Cells */
+            new_cells: string[];
+            /** Unlinked Cells */
+            unlinked_cells: string[];
+        };
+        /** KpiLink */
+        KpiLink: {
+            /** Cell Id */
+            cell_id: number | null;
+            /**
+             * Rename
+             * @default true
+             */
+            rename: boolean;
+        };
+        /** KpiPointRead */
+        KpiPointRead: {
+            /**
+             * Time
+             * Format: date-time
+             */
+            time: string;
+            /** Values */
+            values: {
+                [key: string]: number;
+            };
+        };
+        /** KpiSeriesRead */
+        KpiSeriesRead: {
+            /** Cell Id */
+            cell_id: number;
+            /** Start */
+            start: string | null;
+            /** End */
+            end: string | null;
+            /** Points */
+            points: components["schemas"]["KpiPointRead"][];
+        };
+        /** KpiStatRead */
+        KpiStatRead: {
+            /** Value */
+            value: number | null;
+            level: components["schemas"]["Level"] | null;
+            /** Worst */
+            worst: number | null;
+            worst_level: components["schemas"]["Level"] | null;
+            /** Hours */
+            hours: number;
+        };
+        /** KpiSummaryRead */
+        KpiSummaryRead: {
+            /** Start */
+            start: string | null;
+            /** End */
+            end: string | null;
+            /** Data Start */
+            data_start: string | null;
+            /** Data End */
+            data_end: string | null;
+            /** Cells */
+            cells: components["schemas"]["KpiCellStatsRead"][];
+        };
+        /**
+         * Level
+         * @enum {string}
+         */
+        Level: "ok" | "warn" | "bad";
         /** LoginRequest */
         LoginRequest: {
             /** Username */
@@ -1135,6 +1465,15 @@ export interface components {
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /** ReconciliationRead */
+        ReconciliationRead: {
+            /** Unlinked */
+            unlinked: components["schemas"]["UnlinkedKpiCellRead"][];
+            /** Cells Without Kpi */
+            cells_without_kpi: components["schemas"]["InventoryCellRef"][];
+            /** Enb Names */
+            enb_names: components["schemas"]["EnbNameDiffRead"][];
         };
         /**
          * Role
@@ -1298,6 +1637,17 @@ export interface components {
          * @enum {string}
          */
         Status: "planned" | "active" | "inactive" | "dismantled";
+        /** UnlinkedKpiCellRead */
+        UnlinkedKpiCellRead: {
+            /** Kpi Cell Id */
+            kpi_cell_id: number;
+            /** Cell Name */
+            cell_name: string;
+            /** Enb Name */
+            enb_name: string | null;
+            /** Candidates */
+            candidates: components["schemas"]["InventoryCellRef"][];
+        };
         /** UserCreate */
         UserCreate: {
             /** Username */
@@ -2586,6 +2936,206 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChangeRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalogue_api_v1_kpi_catalogue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiDefRead"][];
+                };
+            };
+        };
+    };
+    import_report_api_v1_kpi_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_report_api_v1_kpi_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiImportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_files_api_v1_kpi_files_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiFileRead"][];
+                };
+            };
+        };
+    };
+    summary_api_v1_kpi_summary_get: {
+        parameters: {
+            query?: {
+                /** @description Начало периода; по умолчанию неделя */
+                start?: string | null;
+                /** @description Конец периода; по умолчанию конец данных */
+                end?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiSummaryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cell_series_api_v1_cells__cell_id__kpi_get: {
+        parameters: {
+            query?: {
+                /** @description Начало периода; по умолчанию неделя */
+                start?: string | null;
+                /** @description Конец периода; по умолчанию конец данных */
+                end?: string | null;
+                /** @description Коды KPI; по умолчанию все */
+                kpi?: string[] | null;
+            };
+            header?: never;
+            path: {
+                cell_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiSeriesRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reconciliation_api_v1_kpi_reconciliation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationRead"];
+                };
+            };
+        };
+    };
+    link_api_v1_kpi_operator_cells__kpi_cell_id__link_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kpi_cell_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KpiLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiCellRead"];
                 };
             };
             /** @description Validation Error */

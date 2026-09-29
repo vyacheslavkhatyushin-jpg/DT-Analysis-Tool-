@@ -11,6 +11,7 @@ from dtat.config import get_settings
 from dtat.errors import DomainError
 from dtat.inventory.excel_router import router as excel_router
 from dtat.inventory.router import router as inventory_router
+from dtat.kpi.router import router as kpi_router
 from dtat.maps.router import router as maps_router
 
 
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
     api.include_router(excel_router)
     api.include_router(maps_router)
     api.include_router(audit_router)
+    api.include_router(kpi_router)
     app.include_router(api)
 
     @app.get("/api/health", tags=["system"])

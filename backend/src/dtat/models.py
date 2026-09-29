@@ -13,6 +13,7 @@ from dtat.inventory.models import (
     Site,
     SitePosition,
 )
+from dtat.kpi.models import KpiCell, KpiFile, KpiSample
 
 __all__ = [
     "Asset",
@@ -22,6 +23,9 @@ __all__ = [
     "ChangeLog",
     "Device",
     "ENodeB",
+    "KpiCell",
+    "KpiFile",
+    "KpiSample",
     "MapOverlay",
     "Site",
     "SitePosition",

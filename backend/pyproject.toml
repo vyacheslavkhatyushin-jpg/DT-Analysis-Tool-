@@ -15,6 +15,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "sqlalchemy>=2.0",
     "typer>=0.27.2",
+    "tzdata>=2025.2",
 ]
 
 [project.scripts]
