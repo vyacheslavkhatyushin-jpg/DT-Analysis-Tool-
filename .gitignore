@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Local configuration and data
+.env
+deploy/.env
+deploy/data/
+deploy/certs/*.key
+deploy/certs/*.crt
+tiles/
+*.pmtiles
+
+# Build artifacts
+dist/
+release/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

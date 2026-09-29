@@ -1,0 +1,66 @@
+[project]
+name = "dtat"
+version = "0.1.0"
+description = "Private LTE network tool: inventory, drive tests, monitoring, planning"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.0",
+    "fastapi[standard]>=0.141.1",
+    "geoalchemy2>=0.20.0",
+    "openpyxl>=3.1.5",
+    "psycopg[binary]>=3.3.6",
+    "pwdlib[argon2]>=0.3.1",
+    "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.32",
+    "sqlalchemy>=2.0",
+    "typer>=0.27.2",
+]
+
+[project.scripts]
+dtat = "dtat.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.9",
+    "testcontainers[postgres]>=4.15.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RUF", "PTH", "DTZ"]
+ignore = ["RUF001", "RUF002", "RUF003"]  # Cyrillic text in strings/comments is intentional
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["DTZ"]
+"src/dtat/migrations/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["src/dtat/migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["openpyxl.*", "testcontainers.*", "geoalchemy2.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Tests work with JSON responses: Any is expected there.
+module = ["tests.*"]
+warn_return_any = false
+disallow_any_generics = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
