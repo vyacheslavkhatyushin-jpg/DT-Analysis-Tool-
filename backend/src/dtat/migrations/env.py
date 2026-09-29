@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import create_engine
 
 from dtat.config import get_settings
+from dtat.db import include_object
 from dtat.models import Base
 
 config = context.config
@@ -11,15 +12,6 @@ if config.config_file_name is not None and config.attributes.get("configure_logg
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
-
-# Tables created by PostGIS itself must not be touched by autogenerate.
-_EXTERNAL_TABLES = {"spatial_ref_sys"}
-
-
-def include_object(
-    obj: object, name: str | None, type_: str, reflected: bool, compare_to: object
-) -> bool:
-    return not (type_ == "table" and name in _EXTERNAL_TABLES)
 
 
 def _url() -> str:

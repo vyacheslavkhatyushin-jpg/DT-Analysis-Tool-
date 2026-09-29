@@ -19,6 +19,17 @@ NAMING_CONVENTION = {
 }
 
 
+# Tables created by PostGIS itself must not be touched by autogenerate.
+_EXTERNAL_TABLES = {"spatial_ref_sys"}
+
+
+def include_object(
+    obj: object, name: str | None, type_: str, reflected: bool, compare_to: object
+) -> bool:
+    """Alembic filter: which database objects migrations manage."""
+    return not (type_ == "table" and name in _EXTERNAL_TABLES)
+
+
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 

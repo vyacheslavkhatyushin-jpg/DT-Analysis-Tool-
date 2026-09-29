@@ -499,6 +499,14 @@ def import_workbook(
     except Exception as exc:  # openpyxl raises a variety of errors for broken files
         raise InvalidDataError("Не удалось прочитать файл: ожидается .xlsx") from exc
 
+    if not any(spec.title in wb.sheetnames for spec in IMPORT_ORDER):
+        wb.close()
+        sheets = ", ".join(f"«{spec.title}»" for spec in IMPORT_ORDER)
+        raise InvalidDataError(
+            f"Это не шаблон импорта: в файле нет листов {sheets}. Скачайте шаблон на этой странице "
+            "и перенесите данные в него. Файл Site Data оператора сначала переведите в шаблон "
+            "командой dtat convert-kcell"
+        )
     if effective_at is not None:
         effective_at = service.effective_time(effective_at)
 

@@ -109,8 +109,12 @@ def convert_kcell(
         list[str] | None,
         typer.Option(help="Координаты выносной площадки: КОД=ШИРОТА,ДОЛГОТА (можно несколько)"),
     ] = None,
+    bandwidth: Annotated[float | None, typer.Option(help="Полоса всех сот, МГц")] = None,
+    power_w: Annotated[float | None, typer.Option(help="Мощность всех сот, Вт")] = None,
 ) -> None:
     """Convert an operator's Site Data workbook (Kcell layout) into the import template."""
+    import math
+
     from dtat.inventory.kcell import convert, write_template
 
     positions: dict[str, tuple[float, float]] = {}
@@ -123,7 +127,12 @@ def convert_kcell(
             raise typer.BadParameter(f"ожидается КОД=ШИРОТА,ДОЛГОТА: {item}") from exc
     try:
         with source.open("rb") as file:
-            result = convert(file, positions)
+            result = convert(
+                file,
+                positions,
+                bandwidth_mhz=bandwidth,
+                max_tx_power_dbm=round(10 * math.log10(power_w * 1000), 1) if power_w else None,
+            )
     except ValueError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc

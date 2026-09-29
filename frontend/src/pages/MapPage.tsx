@@ -3,8 +3,19 @@ import { useLocalStorage } from '@mantine/hooks'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 
-import { type SearchHit, useBasemaps, useMapInventory, useOverlays } from '../api/hooks'
-import { assignCarrierColors } from '../map/carriers'
+import {
+  type KpiLevel,
+  type MapCell,
+  type MapSite,
+  type SearchHit,
+  useBasemaps,
+  useKpiCatalogue,
+  useKpiSummary,
+  useMapInventory,
+  useOverlays,
+} from '../api/hooks'
+import { formatKpi, LEVEL_COLORS, type Statistic, statOf, statsByCell } from '../kpi/kpi'
+import { assignCarrierColors, OTHER_CARRIER_COLOR } from '../map/carriers'
 import { cellLabelFeatures, sectorFeatures, siteFeatures } from '../map/features'
 import { boundsOf, type LonLat } from '../map/geo'
 import { LayersPanel } from '../map/LayersPanel'
@@ -15,9 +26,12 @@ import { buildStyle, type Selection } from '../map/style'
 
 const PANEL_WIDTH = 408
 
-// Keeps centered objects clear of the search box and the object panel.
+const LAYERS_WIDTH = 240
+
+// Keeps centered objects clear of the search box, the layers panel and the object panel.
 function paddingFor(panelOpen: boolean) {
-  return { top: 60, bottom: 20, left: 20, right: panelOpen ? PANEL_WIDTH + 24 : 20 }
+  const right = LAYERS_WIDTH + 24 + (panelOpen ? PANEL_WIDTH + 12 : 0)
+  return { top: 60, bottom: 20, left: 20, right }
 }
 
 function parseSelection(params: URLSearchParams): Selection {
@@ -51,10 +65,52 @@ export function MapPage() {
     key: 'map.sectorRadius',
     defaultValue: 180,
   })
+  // 'carrier' or a KPI code: what the sector color shows.
+  const [colorBy, setColorBy] = useLocalStorage({ key: 'map.colorBy', defaultValue: 'carrier' })
+  const [statistic, setStatistic] = useLocalStorage<Statistic>({
+    key: 'map.kpiStatistic',
+    defaultValue: 'value',
+  })
   const [flyTo, setFlyTo] = useState<FlyTarget | null>(null)
+  const kpiMode = colorBy !== 'carrier'
+  const catalogue = useKpiCatalogue()
+  const kpiSummary = useKpiSummary(null, kpiMode)
+  const kpiDef = catalogue.data?.find((d) => d.code === colorBy)
 
   const sites = useMemo(() => inventory.data ?? [], [inventory.data])
   const carriers = useMemo(() => assignCarrierColors(sites.flatMap((s) => s.cells)), [sites])
+  const kpiByCell = useMemo(
+    () => (kpiMode ? statsByCell(kpiSummary.data?.cells ?? [], colorBy) : null),
+    [kpiMode, kpiSummary.data, colorBy],
+  )
+  const colorFor = useMemo(() => {
+    if (!kpiByCell) {
+      return (cell: MapCell) => carriers.get(cell.earfcn_dl)?.color ?? OTHER_CARRIER_COLOR
+    }
+    return (cell: MapCell) => {
+      const { level } = statOf(kpiByCell.get(cell.id)?.values[colorBy], statistic)
+      return LEVEL_COLORS[level ?? 'none']
+    }
+  }, [kpiByCell, carriers, colorBy, statistic])
+  const siteMarkFor = useMemo(() => {
+    if (!kpiByCell) return undefined
+    // Bigger is worse; the smallest still shows around the site dot (5 px + 2 px halo).
+    const radius: Record<KpiLevel, number> = { ok: 9, warn: 10.5, bad: 12 }
+    const rank: Record<KpiLevel, number> = { ok: 0, warn: 1, bad: 2 }
+    return (site: MapSite) => {
+      let worst: KpiLevel | null = null
+      for (const cell of site.cells) {
+        const { level } = statOf(kpiByCell.get(cell.id)?.values[colorBy], statistic)
+        if (level && (worst === null || rank[level] > rank[worst])) worst = level
+      }
+      return worst ? { color: LEVEL_COLORS[worst], radius: radius[worst] } : null
+    }
+  }, [kpiByCell, colorBy, statistic])
+  const labelFor = useMemo(() => {
+    if (!kpiByCell) return undefined
+    return (cell: MapCell) =>
+      formatKpi(statOf(kpiByCell.get(cell.id)?.values[colorBy], statistic).value, kpiDef)
+  }, [kpiByCell, colorBy, statistic, kpiDef])
   const basemap = basemaps.data?.find((b) => b.id === basemapId) ?? null
   const hiddenSet = useMemo(
     () =>
@@ -75,9 +131,9 @@ export function MapPage() {
       buildStyle({
         basemap,
         overlays: visibleOverlays,
-        sites: siteFeatures(sites),
-        sectors: sectorFeatures(sites, carriers, sectorRadius),
-        cellLabels: cellLabelFeatures(sites, sectorRadius),
+        sites: siteFeatures(sites, siteMarkFor),
+        sectors: sectorFeatures(sites, colorFor, sectorRadius),
+        cellLabels: cellLabelFeatures(sites, sectorRadius, labelFor),
         showSectors,
         showLabels,
         selection,
@@ -88,7 +144,9 @@ export function MapPage() {
       basemap,
       visibleOverlays,
       sites,
-      carriers,
+      colorFor,
+      labelFor,
+      siteMarkFor,
       sectorRadius,
       showSectors,
       showLabels,
@@ -150,7 +208,7 @@ export function MapPage() {
         pos="absolute"
         top={12}
         right={selection ? PANEL_WIDTH + 24 : 12}
-        w={240}
+        w={LAYERS_WIDTH}
         p="sm"
         shadow="sm"
         withBorder
@@ -172,6 +230,12 @@ export function MapPage() {
           sectorRadius={sectorRadius}
           onSectorRadius={setSectorRadius}
           carriers={[...carriers.values()]}
+          colorBy={colorBy}
+          onColorBy={setColorBy}
+          statistic={statistic}
+          onStatistic={setStatistic}
+          kpiDefs={catalogue.data ?? []}
+          kpiPeriod={kpiMode ? kpiSummary.data : undefined}
         />
       </Paper>
       {selection && (

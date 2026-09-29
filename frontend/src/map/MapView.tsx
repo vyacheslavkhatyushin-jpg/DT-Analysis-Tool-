@@ -114,7 +114,18 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
         [west, south],
         [east, north],
       ]
-      map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 0 })
+      // Clear of the panels (padding) plus some air around the outermost sites.
+      const air = 40
+      map.fitBounds(bounds, {
+        padding: {
+          top: padding.top + air,
+          bottom: padding.bottom + air,
+          left: padding.left + air,
+          right: padding.right + air,
+        },
+        maxZoom: 15,
+        duration: 0,
+      })
     } else {
       map.jumpTo({ center: [initialView.lon, initialView.lat], zoom: initialView.zoom, padding })
     }

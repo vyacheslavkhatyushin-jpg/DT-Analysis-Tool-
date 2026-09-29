@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from fastapi.testclient import TestClient
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 from sqlalchemy.orm import Session
 
 from dtat.inventory.excel import CELLS, SITES
@@ -148,6 +148,22 @@ def test_not_an_xlsx(engineer: TestClient) -> None:
         data={"dry_run": "true"},
     )
     assert response.status_code == 422
+
+
+def test_workbook_without_template_sheets(engineer: TestClient) -> None:
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.append(["SITENAME", "EUTRANCELL", "Cell ID"])
+    buffer = BytesIO()
+    wb.save(buffer)
+    response = engineer.post(
+        "/api/v1/inventory/import",
+        files={"file": ("site_data.xlsx", buffer.getvalue(), XLSX)},
+        data={"dry_run": "true"},
+    )
+    assert response.status_code == 422
+    assert "не шаблон импорта" in response.json()["detail"]
 
 
 def test_import_remote_sector(engineer: TestClient) -> None:

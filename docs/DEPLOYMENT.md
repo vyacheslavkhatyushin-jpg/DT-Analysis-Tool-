@@ -168,12 +168,15 @@ ogr2ogr -f GeoJSON -s_srs "<proj-строка местной СК>" -t_srs EPSG:
 Файл оператора со списком сот (формат Kcell: столбцы `SITENAME`, `EUTRANCELL`, `Cell ID`, `PHYSICALCELLID`,
 `EARFCNDL`, `AZIMUT`…) переводится в шаблон импорта командой `dtat convert-kcell`. Выносные секторы
 («Remote сектор ERBS_…» в комментарии) становятся отдельными сайтами. Оператор даёт им координаты eNodeB,
-настоящие указываются ключом `--position` (можно несколько):
+настоящие указываются ключом `--position` (можно несколько). Полосы и мощности в файле нет: их задают
+ключи `--bandwidth` (МГц) и `--power-w` (Вт, в системе хранится в дБм). Сайты с `Tower` = 1 становятся
+передвижными (передвижная башня), `ДГУ` = 1 записывается в примечание («питание от ДГУ»).
 
 ```bash
 cd /opt/dtat/deploy
 sudo docker compose run --rm --no-deps -v "$PWD:/work" -w /work --user "$(id -u):$(id -g)" api \
-  dtat convert-kcell Site_Data.xlsx inventory.xlsx --position 34348=46.949468,79.938039
+  dtat convert-kcell Site_Data.xlsx inventory.xlsx --position 34348=46.949468,79.938039 \
+  --bandwidth 10 --power-w 40
 ```
 
 Файлы берутся из текущей папки и сохраняются в неё. Полученный `inventory.xlsx` загрузите в интерфейсе:

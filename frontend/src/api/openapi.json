@@ -1666,6 +1666,347 @@
         }
       }
     },
+    "/api/v1/kpi/catalogue": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Catalogue",
+        "operationId": "catalogue_api_v1_kpi_catalogue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KpiDefRead"
+                  },
+                  "type": "array",
+                  "title": "Response Catalogue Api V1 Kpi Catalogue Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kpi/import": {
+      "post": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Import Report",
+        "description": "Load an hourly per-cell KPI report; repeated hours replace the stored values.",
+        "operationId": "import_report_api_v1_kpi_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_report_api_v1_kpi_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiImportRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kpi/files": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "List Files",
+        "operationId": "list_files_api_v1_kpi_files_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KpiFileRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Files Api V1 Kpi Files Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kpi/summary": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Summary",
+        "description": "Every cell's KPI over the period: the value (see the catalogue) and the worst hour.",
+        "operationId": "summary_api_v1_kpi_summary_get",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Начало периода; по умолчанию неделя",
+              "title": "Start"
+            },
+            "description": "Начало периода; по умолчанию неделя"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Конец периода; по умолчанию конец данных",
+              "title": "End"
+            },
+            "description": "Конец периода; по умолчанию конец данных"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSummaryRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cells/{cell_id}/kpi": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Cell Series",
+        "description": "Hourly KPI values of an inventory cell.",
+        "operationId": "cell_series_api_v1_cells__cell_id__kpi_get",
+        "parameters": [
+          {
+            "name": "cell_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Cell Id"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Начало периода; по умолчанию неделя",
+              "title": "Start"
+            },
+            "description": "Начало периода; по умолчанию неделя"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Конец периода; по умолчанию конец данных",
+              "title": "End"
+            },
+            "description": "Конец периода; по умолчанию конец данных"
+          },
+          {
+            "name": "kpi",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Коды KPI; по умолчанию все",
+              "title": "Kpi"
+            },
+            "description": "Коды KPI; по умолчанию все"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSeriesRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kpi/reconciliation": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Reconciliation",
+        "description": "Differences between the operator's statistics and the inventory.",
+        "operationId": "reconciliation_api_v1_kpi_reconciliation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationRead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kpi/operator-cells/{kpi_cell_id}/link": {
+      "put": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Link",
+        "description": "Link a statistics cell to an inventory cell (optionally renaming the inventory cell).",
+        "operationId": "link_api_v1_kpi_operator_cells__kpi_cell_id__link_put",
+        "parameters": [
+          {
+            "name": "kpi_cell_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Kpi Cell Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KpiLink"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiCellRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -1694,6 +2035,15 @@
   },
   "components": {
     "schemas": {
+      "Aggregate": {
+        "type": "string",
+        "enum": [
+          "mean",
+          "traffic",
+          "sum"
+        ],
+        "title": "Aggregate"
+      },
       "AssetCreate": {
         "properties": {
           "kind": {
@@ -1980,6 +2330,14 @@
         ],
         "title": "Basemap"
       },
+      "Better": {
+        "type": "string",
+        "enum": [
+          "high",
+          "low"
+        ],
+        "title": "Better"
+      },
       "Body_import_file_api_v1_inventory_import_post": {
         "properties": {
           "file": {
@@ -2010,6 +2368,26 @@
           "file"
         ],
         "title": "Body_import_file_api_v1_inventory_import_post"
+      },
+      "Body_import_report_api_v1_kpi_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "Часовой пояс времени в отчёте",
+            "default": "Asia/Almaty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_report_api_v1_kpi_import_post"
       },
       "CellCreate": {
         "properties": {
@@ -3638,6 +4016,41 @@
         "type": "object",
         "title": "ENodeBUpdate"
       },
+      "EnbNameDiffRead": {
+        "properties": {
+          "enodeb_id": {
+            "type": "integer",
+            "title": "Enodeb Id"
+          },
+          "enb_id": {
+            "type": "integer",
+            "title": "Enb Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kpi_name": {
+            "type": "string",
+            "title": "Kpi Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enodeb_id",
+          "enb_id",
+          "name",
+          "kpi_name"
+        ],
+        "title": "EnbNameDiffRead"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3681,6 +4094,552 @@
           "total_errors"
         ],
         "title": "ImportReport"
+      },
+      "InventoryCellRef": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "enb_id": {
+            "type": "integer",
+            "title": "Enb Id"
+          },
+          "enodeb_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enodeb Name"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "enb_id",
+          "enodeb_name",
+          "site_code"
+        ],
+        "title": "InventoryCellRef"
+      },
+      "KpiCellRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "cell_name": {
+            "type": "string",
+            "title": "Cell Name"
+          },
+          "enb_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enb Name"
+          },
+          "cell_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cell_name",
+          "enb_name",
+          "cell_id"
+        ],
+        "title": "KpiCellRead"
+      },
+      "KpiCellStatsRead": {
+        "properties": {
+          "kpi_cell_id": {
+            "type": "integer",
+            "title": "Kpi Cell Id"
+          },
+          "cell_name": {
+            "type": "string",
+            "title": "Cell Name"
+          },
+          "enb_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enb Name"
+          },
+          "cell_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Id"
+          },
+          "values": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/KpiStatRead"
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kpi_cell_id",
+          "cell_name",
+          "enb_name",
+          "cell_id",
+          "values"
+        ],
+        "title": "KpiCellStatsRead"
+      },
+      "KpiDefRead": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "aggregate": {
+            "$ref": "#/components/schemas/Aggregate"
+          },
+          "better": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Better"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warn": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warn"
+          },
+          "bad": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bad"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "title",
+          "unit",
+          "aggregate",
+          "better",
+          "warn",
+          "bad"
+        ],
+        "title": "KpiDefRead"
+      },
+      "KpiFileRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "uploaded_by": {
+            "type": "string",
+            "title": "Uploaded By"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period End"
+          },
+          "cells": {
+            "type": "integer",
+            "title": "Cells"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "sha256",
+          "size_bytes",
+          "timezone",
+          "uploaded_by",
+          "uploaded_at",
+          "period_start",
+          "period_end",
+          "cells",
+          "samples"
+        ],
+        "title": "KpiFileRead"
+      },
+      "KpiImportRead": {
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/KpiFileRead"
+          },
+          "sheet": {
+            "type": "string",
+            "title": "Sheet"
+          },
+          "kpis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kpis"
+          },
+          "unknown_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unknown Columns"
+          },
+          "new_cells": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "New Cells"
+          },
+          "unlinked_cells": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unlinked Cells"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "sheet",
+          "kpis",
+          "unknown_columns",
+          "new_cells",
+          "unlinked_cells"
+        ],
+        "title": "KpiImportRead"
+      },
+      "KpiLink": {
+        "properties": {
+          "cell_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Id"
+          },
+          "rename": {
+            "type": "boolean",
+            "title": "Rename",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "cell_id"
+        ],
+        "title": "KpiLink"
+      },
+      "KpiPointRead": {
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "time",
+          "values"
+        ],
+        "title": "KpiPointRead"
+      },
+      "KpiSeriesRead": {
+        "properties": {
+          "cell_id": {
+            "type": "integer",
+            "title": "Cell Id"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/KpiPointRead"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cell_id",
+          "start",
+          "end",
+          "points"
+        ],
+        "title": "KpiSeriesRead"
+      },
+      "KpiStatRead": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Level"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "worst": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worst"
+          },
+          "worst_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Level"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hours": {
+            "type": "integer",
+            "title": "Hours"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "level",
+          "worst",
+          "worst_level",
+          "hours"
+        ],
+        "title": "KpiStatRead"
+      },
+      "KpiSummaryRead": {
+        "properties": {
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "data_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Start"
+          },
+          "data_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data End"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/KpiCellStatsRead"
+            },
+            "type": "array",
+            "title": "Cells"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "data_start",
+          "data_end",
+          "cells"
+        ],
+        "title": "KpiSummaryRead"
+      },
+      "Level": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "warn",
+          "bad"
+        ],
+        "title": "Level"
       },
       "LoginRequest": {
         "properties": {
@@ -4083,6 +5042,38 @@
           "new_password"
         ],
         "title": "PasswordChange"
+      },
+      "ReconciliationRead": {
+        "properties": {
+          "unlinked": {
+            "items": {
+              "$ref": "#/components/schemas/UnlinkedKpiCellRead"
+            },
+            "type": "array",
+            "title": "Unlinked"
+          },
+          "cells_without_kpi": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryCellRef"
+            },
+            "type": "array",
+            "title": "Cells Without Kpi"
+          },
+          "enb_names": {
+            "items": {
+              "$ref": "#/components/schemas/EnbNameDiffRead"
+            },
+            "type": "array",
+            "title": "Enb Names"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unlinked",
+          "cells_without_kpi",
+          "enb_names"
+        ],
+        "title": "ReconciliationRead"
       },
       "Role": {
         "type": "string",
@@ -4618,6 +5609,44 @@
           "dismantled"
         ],
         "title": "Status"
+      },
+      "UnlinkedKpiCellRead": {
+        "properties": {
+          "kpi_cell_id": {
+            "type": "integer",
+            "title": "Kpi Cell Id"
+          },
+          "cell_name": {
+            "type": "string",
+            "title": "Cell Name"
+          },
+          "enb_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enb Name"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryCellRef"
+            },
+            "type": "array",
+            "title": "Candidates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kpi_cell_id",
+          "cell_name",
+          "enb_name",
+          "candidates"
+        ],
+        "title": "UnlinkedKpiCellRead"
       },
       "UserCreate": {
         "properties": {
