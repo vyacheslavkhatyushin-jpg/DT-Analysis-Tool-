@@ -166,6 +166,27 @@ def test_workbook_without_template_sheets(engineer: TestClient) -> None:
     assert "не шаблон импорта" in response.json()["detail"]
 
 
+def test_reimport_with_corrected_enb_id_renumbers(engineer: TestClient) -> None:
+    sites: list[list[object]] = [["34344", "Sulphide", None, None, 46.947, 79.935]]
+    cells: list[list[object]] = [
+        ["34344", enb, "ERBS_34344", None, local, None, f"P_534344-{local}", None, pci, 6200]
+        for local, pci in ((70, 43), (72, 40))
+        for enb in (34344,)
+    ]
+    assert _upload(engineer, _workbook_with({"Сайты": sites, "Соты": cells}), dry_run=False)[
+        "applied"
+    ]
+    # The phones report eNB 534344: the same cells under the corrected eNB ID.
+    fixed: list[list[object]] = [[*row[:1], 534344, *row[2:]] for row in cells]
+    report = _upload(engineer, _workbook_with({"Сайты": sites, "Соты": fixed}), dry_run=False)
+    # The first row renumbers the eNodeB; the second finds it under the new ID.
+    assert report["applied"] and _sheet(report, "Соты")["updated"] == 1, report
+    enodebs = engineer.get("/api/v1/enodebs").json()
+    assert [e["enb_id"] for e in enodebs] == [534344]
+    by_name = {c["name"]: c for c in engineer.get("/api/v1/cells").json()}
+    assert by_name["P_534344-70"]["eci"] == 534344 * 256 + 70
+
+
 def test_import_remote_sector(engineer: TestClient) -> None:
     sites: list[list[object]] = [
         ["ZH", "Жанар", None, None, 46.894, 79.612],

@@ -66,7 +66,11 @@ def test_convert_sites_cells_and_remote_sectors() -> None:
         _row("ERBS_34348_KONUS_KP", "P_534348-70", 70, 50, (46.949, 79.938)),
     )
     result = convert(
-        source, {"34348": (46.949468, 79.938039)}, bandwidth_mhz=10, max_tx_power_dbm=46.0
+        source,
+        {"34348": (46.949468, 79.938039)},
+        bandwidth_mhz=10,
+        max_tx_power_dbm=46.0,
+        tac=55100,
     )
 
     sites = {s.code: s for s in result.sites}
@@ -79,7 +83,7 @@ def test_convert_sites_cells_and_remote_sectors() -> None:
 
     cells = {c["name"]: c for c in result.cells}
     assert cells["P_534344-70"]["notes"] is None
-    assert cells["P_534344-70"]["enb_id"] == 34344
+    assert (cells["P_534344-70"]["enb_id"], cells["P_534344-70"]["tac"]) == (534344, 55100)
     assert cells["P_534344-70"]["earfcn_ul"] == 24200
     assert (cells["P_534344-70"]["bandwidth_mhz"], cells["P_534344-70"]["max_tx_power_dbm"]) == (
         10,
