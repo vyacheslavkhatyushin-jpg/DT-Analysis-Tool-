@@ -26,6 +26,12 @@ export type KpiImport = Schemas['KpiImportRead']
 export type KpiSeries = Schemas['KpiSeriesRead']
 export type KpiReconciliation = Schemas['ReconciliationRead']
 export type KpiPeriod = { start: string; end: string }
+export type DriveSession = Schemas['DriveSessionRead']
+export type DriveSessionItem = Schemas['DriveSessionListItem']
+export type DriveReport = Schemas['DriveReportRead']
+export type DriveTrack = Schemas['TrackRead']
+export type DriveMetric = Schemas['MetricRead']
+export type DriveImport = Schemas['DriveImportRead']
 
 // Every inventory query lives under this prefix: any edit refreshes all of them.
 // The inventory is small (tens of sites), so precise invalidation is not worth the complexity.
@@ -160,6 +166,52 @@ export const useKpiFiles = () =>
   useQuery({
     queryKey: [INVENTORY, 'kpi', 'files'],
     queryFn: () => unwrap(api.GET('/api/v1/kpi/files')),
+  })
+
+export const useDriveMetrics = () =>
+  useQuery({
+    queryKey: ['drive-metrics'],
+    // The bounds tuple is widened to an array by the fetch client's response typing.
+    queryFn: async () => (await unwrap(api.GET('/api/v1/drive/metrics'))) as DriveMetric[],
+    staleTime: Infinity,
+  })
+
+// Drive tests are matched to inventory cells: they live under the inventory prefix too.
+export const useDriveSessions = () =>
+  useQuery({
+    queryKey: [INVENTORY, 'drive', 'sessions'],
+    queryFn: () => unwrap(api.GET('/api/v1/drive-sessions')),
+  })
+
+export const useDriveSession = (id: number) =>
+  useQuery({
+    queryKey: [INVENTORY, 'drive', 'session', id],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/drive-sessions/{session_id}', { params: { path: { session_id: id } } }),
+      ),
+  })
+
+export const useDriveReport = (id: number) =>
+  useQuery({
+    queryKey: [INVENTORY, 'drive', 'report', id],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/drive-sessions/{session_id}/report', {
+          params: { path: { session_id: id } },
+        }),
+      ),
+  })
+
+export const useDriveTrack = (id: number) =>
+  useQuery({
+    queryKey: [INVENTORY, 'drive', 'track', id],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/drive-sessions/{session_id}/track', {
+          params: { path: { session_id: id } },
+        }),
+      ),
   })
 
 /** Mutation that refreshes all inventory queries on success. */

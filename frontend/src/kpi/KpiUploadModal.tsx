@@ -16,6 +16,7 @@ import { useMemo, useState } from 'react'
 import { ApiError, errorMessage } from '../api/errors'
 import { type KpiImport, useInvalidateInventory } from '../api/hooks'
 import { notifyError, notifySaved } from '../components/confirm'
+import { BROWSER_ZONE, zoneOptions } from '../components/timezones'
 import { plural } from '../labels'
 import { formatPeriod } from './kpi'
 
@@ -32,14 +33,6 @@ async function upload(file: File, timezone: string): Promise<KpiImport> {
   const data: unknown = await response.json().catch(() => undefined)
   if (!response.ok) throw new ApiError(response.status, errorMessage(data, response.status))
   return data as KpiImport
-}
-
-const BROWSER_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
-
-function zoneOptions(): string[] {
-  const zones =
-    typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : []
-  return [...new Set([BROWSER_ZONE, 'Asia/Almaty', 'UTC', ...zones])]
 }
 
 export function KpiUploadModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {

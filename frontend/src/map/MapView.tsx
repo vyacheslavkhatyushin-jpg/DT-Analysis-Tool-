@@ -42,16 +42,21 @@ type Props = {
   /** Space covered by floating panels, kept clear when centering. */
   padding: Padding
   onSelect: (selection: Selection) => void
+  /** Click on a drive test point (its `seq`). */
+  onPoint?: (seq: number) => void
 }
 
-export function MapView({ style, initialView, flyTo, padding, onSelect }: Props) {
+export function MapView({ style, initialView, flyTo, padding, onSelect, onPoint }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const onSelectRef = useRef(onSelect)
+  const onPointRef = useRef(onPoint)
   useEffect(() => {
     onSelectRef.current = onSelect
+    onPointRef.current = onPoint
   })
   const fittedRef = useRef(false)
+  const loadedRef = useRef(false)
   const styleRef = useRef(style)
 
   useEffect(() => {
@@ -74,8 +79,10 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
         onSelectRef.current(null)
         return
       }
-      const props = feature.properties as { siteId?: number; cellId?: number }
-      if (feature.layer.id === 'sites-circle' && props.siteId !== undefined) {
+      const props = feature.properties as { siteId?: number; cellId?: number; seq?: number }
+      if (feature.layer.id === 'track-points' && props.seq !== undefined) {
+        onPointRef.current?.(props.seq)
+      } else if (feature.layer.id === 'sites-circle' && props.siteId !== undefined) {
         onSelectRef.current({ type: 'site', id: props.siteId })
       } else if (props.cellId !== undefined) {
         onSelectRef.current({ type: 'cell', id: props.cellId })
@@ -86,12 +93,18 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
       map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''))
     }
 
-    map.once('load', () => map.setStyle(styleRef.current, { diff: true }))
+    map.once('load', () => {
+      loadedRef.current = true
+      map.setStyle(styleRef.current, { diff: true })
+    })
 
     mapRef.current = map
     return () => {
       map.remove()
       mapRef.current = null
+      // A new map (React re-runs effects in development) needs its own initial fit.
+      fittedRef.current = false
+      loadedRef.current = false
     }
     // The map is created once; later style changes are applied as diffs below.
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -108,27 +121,13 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
     const map = mapRef.current
     if (!map || !initialView || fittedRef.current) return
     fittedRef.current = true
-    if ('bounds' in initialView) {
-      const [west, south, east, north] = initialView.bounds
-      const bounds: LngLatBoundsLike = [
-        [west, south],
-        [east, north],
-      ]
-      // Clear of the panels (padding) plus some air around the outermost sites.
-      const air = 40
-      map.fitBounds(bounds, {
-        padding: {
-          top: padding.top + air,
-          bottom: padding.bottom + air,
-          left: padding.left + air,
-          right: padding.right + air,
-        },
-        maxZoom: 15,
-        duration: 0,
-      })
-    } else {
-      map.jumpTo({ center: [initialView.lon, initialView.lat], zoom: initialView.zoom, padding })
+    // A map created together with its data may not have its final size yet: fit once it has.
+    const fit = () => {
+      map.resize()
+      fitView(map, initialView, padding)
     }
+    if (loadedRef.current) fit()
+    else map.once('load', fit)
   }, [initialView, padding])
 
   useEffect(() => {
@@ -143,4 +142,28 @@ export function MapView({ style, initialView, flyTo, padding, onSelect }: Props)
   }, [flyTo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div ref={container} style={{ position: 'absolute', inset: 0 }} />
+}
+
+function fitView(map: MapLibreMap, view: InitialView, padding: Padding) {
+  if ('bounds' in view) {
+    const [west, south, east, north] = view.bounds
+    const bounds: LngLatBoundsLike = [
+      [west, south],
+      [east, north],
+    ]
+    // Clear of the panels (padding) plus some air around the outermost sites.
+    const air = 40
+    map.fitBounds(bounds, {
+      padding: {
+        top: padding.top + air,
+        bottom: padding.bottom + air,
+        left: padding.left + air,
+        right: padding.right + air,
+      },
+      maxZoom: 15,
+      duration: 0,
+    })
+  } else {
+    map.jumpTo({ center: [view.lon, view.lat], zoom: view.zoom, padding })
+  }
 }

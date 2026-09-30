@@ -33,6 +33,16 @@ const router = createBrowserRouter([
       },
       { path: 'kpi', lazy: async () => ({ Component: (await import('./pages/KpiPage')).KpiPage }) },
       {
+        path: 'drive',
+        lazy: async () => ({ Component: (await import('./pages/DrivePage')).DrivePage }),
+      },
+      {
+        path: 'drive/:id',
+        lazy: async () => ({
+          Component: (await import('./pages/DriveSessionPage')).DriveSessionPage,
+        }),
+      },
+      {
         path: 'assets',
         lazy: async () => ({ Component: (await import('./pages/AssetsPage')).AssetsPage }),
       },
