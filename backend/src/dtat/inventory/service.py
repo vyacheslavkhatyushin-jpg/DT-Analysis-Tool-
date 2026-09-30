@@ -396,6 +396,10 @@ def find_cell_by_eci(session: Session, eci: int) -> Cell | None:
     return session.scalars(_cells_query().where(Cell.eci == eci)).unique().one_or_none()
 
 
+def find_cell_by_name(session: Session, name: str) -> Cell | None:
+    return session.scalars(_cells_query().where(Cell.name == name)).unique().one_or_none()
+
+
 def _cell_label(cell: Cell) -> str:
     return cell.name or f"ECI {cell.eci}"
 

@@ -426,6 +426,19 @@ def _import_cell(
     site = site_or_error(site_code)
     enb_site = site_or_error(enb_site_code) if enb_site_code else site
     enodeb = service.find_enodeb_by_enb_id(session, enb_id)
+    renumbered = False
+    if enodeb is None:
+        # A known cell under another eNB ID: the eNB ID was corrected (the operator's numbering
+        # became known). Renumber that eNodeB instead of creating a duplicate; ECIs follow.
+        known = service.find_cell_by_name(session, values["name"]) if values.get("name") else None
+        if known is not None and known.local_cell_id == local_cell_id:
+            enodeb, _ = service.update_enodeb(
+                session,
+                actor,
+                known.enodeb_id,
+                ENodeBUpdate.model_validate({"enb_id": enb_id, "effective_at": at}),
+            )
+            renumbered = True
     if enodeb is None:
         enodeb = service.create_enodeb(
             session, actor, ENodeBCreate(site_id=enb_site.id, enb_id=enb_id, name=enb_name)
@@ -453,7 +466,7 @@ def _import_cell(
         cell.id,
         CellUpdate.model_validate({**values, "site_id": site.id, "effective_at": at}),
     )
-    return _outcome(changed)
+    return _outcome(changed or renumbered)
 
 
 def _import_device(

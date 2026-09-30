@@ -111,6 +111,7 @@ def convert_kcell(
     ] = None,
     bandwidth: Annotated[float | None, typer.Option(help="Полоса всех сот, МГц")] = None,
     power_w: Annotated[float | None, typer.Option(help="Мощность всех сот, Вт")] = None,
+    tac: Annotated[int | None, typer.Option(help="TAC всех сот")] = None,
 ) -> None:
     """Convert an operator's Site Data workbook (Kcell layout) into the import template."""
     import math
@@ -131,6 +132,7 @@ def convert_kcell(
                 file,
                 positions,
                 bandwidth_mhz=bandwidth,
+                tac=tac,
                 max_tx_power_dbm=round(10 * math.log10(power_w * 1000), 1) if power_w else None,
             )
     except ValueError as exc:

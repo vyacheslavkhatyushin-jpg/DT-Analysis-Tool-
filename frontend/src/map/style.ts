@@ -28,10 +28,14 @@ export type MapData = {
   showSectors: boolean
   showLabels: boolean
   selection: Selection
+  /** Drive test: points with `seq` and `color`, the selected point and its link to the sector. */
+  track?: FeatureCollection
+  trackLink?: FeatureCollection
+  selectedPoint?: number | null
 }
 
 // Layers that react to clicks, in priority order.
-export const INTERACTIVE_LAYERS = ['sites-circle', 'sectors-fill'] as const
+export const INTERACTIVE_LAYERS = ['track-points', 'sites-circle', 'sectors-fill'] as const
 
 function assetUrl(path: string): string {
   return `${window.location.origin}${path}`
@@ -128,11 +132,53 @@ const inactive: ExpressionSpecification = [
   ['literal', ['inactive', 'dismantled']],
 ]
 
+const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] }
+
+function trackLayers(data: MapData): LayerSpecification[] {
+  if (!data.track) return []
+  return [
+    {
+      // From the selected point to the antenna of its serving cell.
+      id: 'track-link',
+      type: 'line',
+      source: 'track-link',
+      paint: { 'line-color': INK, 'line-width': 1.5 },
+    },
+    {
+      id: 'track-points',
+      type: 'circle',
+      source: 'track',
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5],
+        'circle-color': ['get', 'color'],
+        'circle-stroke-color': HALO,
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 12, 0, 15, 1],
+      },
+    },
+    {
+      id: 'track-selected',
+      type: 'circle',
+      source: 'track',
+      filter: ['==', ['get', 'seq'], data.selectedPoint ?? -1],
+      paint: {
+        'circle-radius': 8,
+        'circle-color': 'rgba(0,0,0,0)',
+        'circle-stroke-color': INK,
+        'circle-stroke-width': 2.5,
+      },
+    },
+  ]
+}
+
 export function buildStyle(data: MapData): StyleSpecification {
   const sources: Record<string, SourceSpecification> = {
     sites: { type: 'geojson', data: data.sites },
     sectors: { type: 'geojson', data: data.sectors },
     'cell-labels': { type: 'geojson', data: data.cellLabels },
+  }
+  if (data.track) {
+    sources.track = { type: 'geojson', data: data.track }
+    sources['track-link'] = { type: 'geojson', data: data.trackLink ?? EMPTY }
   }
   const layers: LayerSpecification[] = [
     { id: 'background', type: 'background', paint: { 'background-color': SURFACE } },
@@ -190,6 +236,7 @@ export function buildStyle(data: MapData): StyleSpecification {
       filter: selectionFilter(data.selection, 'siteId'),
       paint: { 'line-color': INK, 'line-width': 2.5 },
     },
+    ...trackLayers(data),
     {
       id: 'cell-labels',
       type: 'symbol',

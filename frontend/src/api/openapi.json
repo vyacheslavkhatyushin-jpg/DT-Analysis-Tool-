@@ -2007,6 +2007,386 @@
         }
       }
     },
+    "/api/v1/drive/metrics": {
+      "get": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Metrics",
+        "operationId": "metrics_api_v1_drive_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MetricRead"
+                  },
+                  "type": "array",
+                  "title": "Response Metrics Api V1 Drive Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions/import": {
+      "post": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Import Log",
+        "description": "Load a NetMonitor session log (.csv, or .zip with one or more logs).",
+        "operationId": "import_log_api_v1_drive_sessions_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_log_api_v1_drive_sessions_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveImportRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions": {
+      "get": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "List Sessions",
+        "operationId": "list_sessions_api_v1_drive_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DriveSessionListItem"
+                  },
+                  "type": "array",
+                  "title": "Response List Sessions Api V1 Drive Sessions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions/{session_id}": {
+      "get": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Get Session",
+        "operationId": "get_session_api_v1_drive_sessions__session_id__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveSessionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Update Session",
+        "operationId": "update_session_api_v1_drive_sessions__session_id__patch",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveSessionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveSessionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Delete Session",
+        "operationId": "delete_session_api_v1_drive_sessions__session_id__delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions/{session_id}/report": {
+      "get": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Report",
+        "description": "Quality distributions, serving cells, problem segments and unknown cells of a session.",
+        "operationId": "report_api_v1_drive_sessions__session_id__report_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveReportRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions/{session_id}/rematch": {
+      "post": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Rematch",
+        "description": "Match the samples to inventory cells again, e.g. after fixing an eNB ID.",
+        "operationId": "rematch_api_v1_drive_sessions__session_id__rematch_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveReportRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions/{session_id}/track": {
+      "get": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Track",
+        "operationId": "track_api_v1_drive_sessions__session_id__track_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drive-sessions/{session_id}/original": {
+      "get": {
+        "tags": [
+          "drive-tests"
+        ],
+        "summary": "Original",
+        "operationId": "original_api_v1_drive_sessions__session_id__original_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -2368,6 +2748,48 @@
           "file"
         ],
         "title": "Body_import_file_api_v1_inventory_import_post"
+      },
+      "Body_import_log_api_v1_drive_sessions_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "Часовой пояс времени в логе",
+            "default": "Asia/Almaty"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_log_api_v1_drive_sessions_import_post"
       },
       "Body_import_report_api_v1_kpi_import_post": {
         "properties": {
@@ -3724,6 +4146,509 @@
         "type": "object",
         "title": "DeviceUpdate"
       },
+      "DistributionRead": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Quality"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "p10": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10"
+          },
+          "p90": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric",
+          "counts",
+          "median",
+          "p10",
+          "p90"
+        ],
+        "title": "DistributionRead"
+      },
+      "DriveImportRead": {
+        "properties": {
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/DriveSessionRead"
+            },
+            "type": "array",
+            "title": "Sessions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sessions"
+        ],
+        "title": "DriveImportRead"
+      },
+      "DriveReportRead": {
+        "properties": {
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "with_position": {
+            "type": "integer",
+            "title": "With Position"
+          },
+          "with_radio": {
+            "type": "integer",
+            "title": "With Radio"
+          },
+          "matched": {
+            "type": "integer",
+            "title": "Matched"
+          },
+          "distributions": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionRead"
+            },
+            "type": "array",
+            "title": "Distributions"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/ServingCellRead"
+            },
+            "type": "array",
+            "title": "Cells"
+          },
+          "cell_changes": {
+            "type": "integer",
+            "title": "Cell Changes"
+          },
+          "ping_pongs": {
+            "type": "integer",
+            "title": "Ping Pongs"
+          },
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentRead"
+            },
+            "type": "array",
+            "title": "Problems"
+          },
+          "unknown": {
+            "items": {
+              "$ref": "#/components/schemas/UnknownCellRead"
+            },
+            "type": "array",
+            "title": "Unknown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "samples",
+          "with_position",
+          "with_radio",
+          "matched",
+          "distributions",
+          "cells",
+          "cell_changes",
+          "ping_pongs",
+          "problems",
+          "unknown"
+        ],
+        "title": "DriveReportRead"
+      },
+      "DriveSessionListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "$ref": "#/components/schemas/DriveSource"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ended At"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "plmn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plmn"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "rx_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rx Bytes"
+          },
+          "tx_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tx Bytes"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "uploaded_by": {
+            "type": "string",
+            "title": "Uploaded By"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          },
+          "radio_samples": {
+            "type": "integer",
+            "title": "Radio Samples"
+          },
+          "matched_samples": {
+            "type": "integer",
+            "title": "Matched Samples"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source",
+          "device_id",
+          "device_name",
+          "started_at",
+          "ended_at",
+          "samples",
+          "distance_m",
+          "plmn",
+          "operator",
+          "rx_bytes",
+          "tx_bytes",
+          "timezone",
+          "notes",
+          "filename",
+          "uploaded_by",
+          "uploaded_at",
+          "radio_samples",
+          "matched_samples"
+        ],
+        "title": "DriveSessionListItem"
+      },
+      "DriveSessionRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "$ref": "#/components/schemas/DriveSource"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ended At"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "plmn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plmn"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "rx_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rx Bytes"
+          },
+          "tx_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tx Bytes"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "uploaded_by": {
+            "type": "string",
+            "title": "Uploaded By"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source",
+          "device_id",
+          "device_name",
+          "started_at",
+          "ended_at",
+          "samples",
+          "distance_m",
+          "plmn",
+          "operator",
+          "rx_bytes",
+          "tx_bytes",
+          "timezone",
+          "notes",
+          "filename",
+          "uploaded_by",
+          "uploaded_at"
+        ],
+        "title": "DriveSessionRead"
+      },
+      "DriveSessionUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          }
+        },
+        "type": "object",
+        "title": "DriveSessionUpdate"
+      },
+      "DriveSource": {
+        "type": "string",
+        "enum": [
+          "netmonitor",
+          "nemo",
+          "app"
+        ],
+        "title": "DriveSource"
+      },
       "ENodeBCreate": {
         "properties": {
           "name": {
@@ -5023,6 +5948,48 @@
         ],
         "title": "MapSite"
       },
+      "MetricRead": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "bounds": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Bounds",
+            "description": "Нижние границы классов «хорошо», «удовлетворительно», «плохо»"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "title",
+          "unit",
+          "bounds"
+        ],
+        "title": "MetricRead"
+      },
       "PasswordChange": {
         "properties": {
           "current_password": {
@@ -5042,6 +6009,16 @@
           "new_password"
         ],
         "title": "PasswordChange"
+      },
+      "Quality": {
+        "type": "string",
+        "enum": [
+          "good",
+          "fair",
+          "poor",
+          "bad"
+        ],
+        "title": "Quality"
       },
       "ReconciliationRead": {
         "properties": {
@@ -5074,6 +6051,41 @@
           "enb_names"
         ],
         "title": "ReconciliationRead"
+      },
+      "RenumberHintRead": {
+        "properties": {
+          "enodeb_id": {
+            "type": "integer",
+            "title": "Enodeb Id"
+          },
+          "enb_id": {
+            "type": "integer",
+            "title": "Enb Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "new_enb_id": {
+            "type": "integer",
+            "title": "New Enb Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enodeb_id",
+          "enb_id",
+          "name",
+          "new_enb_id"
+        ],
+        "title": "RenumberHintRead"
       },
       "Role": {
         "type": "string",
@@ -5163,6 +6175,270 @@
           "label"
         ],
         "title": "SearchHit"
+      },
+      "SegmentRead": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End"
+          },
+          "seconds": {
+            "type": "integer",
+            "title": "Seconds"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "eci": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eci"
+          },
+          "cell_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Name"
+          },
+          "rsrp_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsrp Median"
+          },
+          "sinr_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sinr Median"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "start",
+          "end",
+          "seconds",
+          "lat",
+          "lon",
+          "eci",
+          "cell_name",
+          "rsrp_median",
+          "sinr_median"
+        ],
+        "title": "SegmentRead"
+      },
+      "ServingCellRead": {
+        "properties": {
+          "eci": {
+            "type": "integer",
+            "title": "Eci"
+          },
+          "enb_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enb Id"
+          },
+          "local_cell_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Cell Id"
+          },
+          "pci": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pci"
+          },
+          "cell_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Id"
+          },
+          "cell_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Name"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
+          "site_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Code"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "rsrp_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsrp Median"
+          },
+          "rsrq_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsrq Median"
+          },
+          "sinr_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sinr Median"
+          },
+          "max_distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Distance M"
+          },
+          "inventory_pci": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventory Pci"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eci",
+          "enb_id",
+          "local_cell_id",
+          "pci",
+          "cell_id",
+          "cell_name",
+          "site_id",
+          "site_code",
+          "samples",
+          "rsrp_median",
+          "rsrq_median",
+          "sinr_median",
+          "max_distance_m",
+          "inventory_pci"
+        ],
+        "title": "ServingCellRead"
       },
       "SheetReport": {
         "properties": {
@@ -5609,6 +6885,203 @@
           "dismantled"
         ],
         "title": "Status"
+      },
+      "TrackRead": {
+        "properties": {
+          "seq": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Seq"
+          },
+          "time": {
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "type": "array",
+            "title": "Time"
+          },
+          "lat": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Lat"
+          },
+          "lon": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Lon"
+          },
+          "rsrp": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Rsrp"
+          },
+          "rsrq": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Rsrq"
+          },
+          "sinr": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Sinr"
+          },
+          "pci": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Pci"
+          },
+          "eci": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Eci"
+          },
+          "cell_id": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Cell Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "time",
+          "lat",
+          "lon",
+          "rsrp",
+          "rsrq",
+          "sinr",
+          "pci",
+          "eci",
+          "cell_id"
+        ],
+        "title": "TrackRead",
+        "description": "Samples with a position, column by column."
+      },
+      "UnknownCellRead": {
+        "properties": {
+          "eci": {
+            "type": "integer",
+            "title": "Eci"
+          },
+          "enb_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enb Id"
+          },
+          "local_cell_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Cell Id"
+          },
+          "pci": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pci"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RenumberHintRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "eci",
+          "enb_id",
+          "local_cell_id",
+          "pci",
+          "samples",
+          "hint"
+        ],
+        "title": "UnknownCellRead"
       },
       "UnlinkedKpiCellRead": {
         "properties": {

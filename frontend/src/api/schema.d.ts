@@ -619,6 +619,153 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/drive/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_api_v1_drive_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive-sessions/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Log
+         * @description Load a NetMonitor session log (.csv, or .zip with one or more logs).
+         */
+        post: operations["import_log_api_v1_drive_sessions_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sessions */
+        get: operations["list_sessions_api_v1_drive_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive-sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Session */
+        get: operations["get_session_api_v1_drive_sessions__session_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Session */
+        delete: operations["delete_session_api_v1_drive_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Session */
+        patch: operations["update_session_api_v1_drive_sessions__session_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/drive-sessions/{session_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report
+         * @description Quality distributions, serving cells, problem segments and unknown cells of a session.
+         */
+        get: operations["report_api_v1_drive_sessions__session_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive-sessions/{session_id}/rematch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rematch
+         * @description Match the samples to inventory cells again, e.g. after fixing an eNB ID.
+         */
+        post: operations["rematch_api_v1_drive_sessions__session_id__rematch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive-sessions/{session_id}/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Track */
+        get: operations["track_api_v1_drive_sessions__session_id__track_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive-sessions/{session_id}/original": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Original */
+        get: operations["original_api_v1_drive_sessions__session_id__original_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -749,6 +896,21 @@ export interface components {
             dry_run: boolean;
             /** Effective At */
             effective_at?: string | null;
+        };
+        /** Body_import_log_api_v1_drive_sessions_import_post */
+        Body_import_log_api_v1_drive_sessions_import_post: {
+            /** File */
+            file: string;
+            /**
+             * Timezone
+             * @description Часовой пояс времени в логе
+             * @default Asia/Almaty
+             */
+            timezone: string;
+            /** Name */
+            name?: string | null;
+            /** Device Id */
+            device_id?: number | null;
         };
         /** Body_import_report_api_v1_kpi_import_post */
         Body_import_report_api_v1_kpi_import_post: {
@@ -1065,6 +1227,161 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
+        /** DistributionRead */
+        DistributionRead: {
+            /** Metric */
+            metric: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Median */
+            median: number | null;
+            /** P10 */
+            p10: number | null;
+            /** P90 */
+            p90: number | null;
+        };
+        /** DriveImportRead */
+        DriveImportRead: {
+            /** Sessions */
+            sessions: components["schemas"]["DriveSessionRead"][];
+        };
+        /** DriveReportRead */
+        DriveReportRead: {
+            /** Samples */
+            samples: number;
+            /** With Position */
+            with_position: number;
+            /** With Radio */
+            with_radio: number;
+            /** Matched */
+            matched: number;
+            /** Distributions */
+            distributions: components["schemas"]["DistributionRead"][];
+            /** Cells */
+            cells: components["schemas"]["ServingCellRead"][];
+            /** Cell Changes */
+            cell_changes: number;
+            /** Ping Pongs */
+            ping_pongs: number;
+            /** Problems */
+            problems: components["schemas"]["SegmentRead"][];
+            /** Unknown */
+            unknown: components["schemas"]["UnknownCellRead"][];
+        };
+        /** DriveSessionListItem */
+        DriveSessionListItem: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            source: components["schemas"]["DriveSource"];
+            /** Device Id */
+            device_id: number | null;
+            /** Device Name */
+            device_name: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Ended At
+             * Format: date-time
+             */
+            ended_at: string;
+            /** Samples */
+            samples: number;
+            /** Distance M */
+            distance_m: number;
+            /** Plmn */
+            plmn: string | null;
+            /** Operator */
+            operator: string | null;
+            /** Rx Bytes */
+            rx_bytes: number | null;
+            /** Tx Bytes */
+            tx_bytes: number | null;
+            /** Timezone */
+            timezone: string;
+            /** Notes */
+            notes: string | null;
+            /** Filename */
+            filename: string;
+            /** Uploaded By */
+            uploaded_by: string;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+            /** Radio Samples */
+            radio_samples: number;
+            /** Matched Samples */
+            matched_samples: number;
+        };
+        /** DriveSessionRead */
+        DriveSessionRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            source: components["schemas"]["DriveSource"];
+            /** Device Id */
+            device_id: number | null;
+            /** Device Name */
+            device_name: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Ended At
+             * Format: date-time
+             */
+            ended_at: string;
+            /** Samples */
+            samples: number;
+            /** Distance M */
+            distance_m: number;
+            /** Plmn */
+            plmn: string | null;
+            /** Operator */
+            operator: string | null;
+            /** Rx Bytes */
+            rx_bytes: number | null;
+            /** Tx Bytes */
+            tx_bytes: number | null;
+            /** Timezone */
+            timezone: string;
+            /** Notes */
+            notes: string | null;
+            /** Filename */
+            filename: string;
+            /** Uploaded By */
+            uploaded_by: string;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+        };
+        /** DriveSessionUpdate */
+        DriveSessionUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Device Id */
+            device_id?: number | null;
+        };
+        /**
+         * DriveSource
+         * @enum {string}
+         */
+        DriveSource: "netmonitor" | "nemo" | "app";
         /** ENodeBCreate */
         ENodeBCreate: {
             /** Name */
@@ -1459,6 +1776,24 @@ export interface components {
             /** Cells */
             cells: components["schemas"]["MapCell"][];
         };
+        /** MetricRead */
+        MetricRead: {
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Unit */
+            unit: string;
+            /**
+             * Bounds
+             * @description Нижние границы классов «хорошо», «удовлетворительно», «плохо»
+             */
+            bounds: [
+                number,
+                number,
+                number
+            ];
+        };
         /** PasswordChange */
         PasswordChange: {
             /** Current Password */
@@ -1466,6 +1801,11 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /**
+         * Quality
+         * @enum {string}
+         */
+        Quality: "good" | "fair" | "poor" | "bad";
         /** ReconciliationRead */
         ReconciliationRead: {
             /** Unlinked */
@@ -1474,6 +1814,17 @@ export interface components {
             cells_without_kpi: components["schemas"]["InventoryCellRef"][];
             /** Enb Names */
             enb_names: components["schemas"]["EnbNameDiffRead"][];
+        };
+        /** RenumberHintRead */
+        RenumberHintRead: {
+            /** Enodeb Id */
+            enodeb_id: number;
+            /** Enb Id */
+            enb_id: number;
+            /** Name */
+            name: string | null;
+            /** New Enb Id */
+            new_enb_id: number;
         };
         /**
          * Role
@@ -1504,6 +1855,66 @@ export interface components {
             lat?: number | null;
             /** Lon */
             lon?: number | null;
+        };
+        /** SegmentRead */
+        SegmentRead: {
+            /** Kind */
+            kind: string;
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /** Seconds */
+            seconds: number;
+            /** Lat */
+            lat: number | null;
+            /** Lon */
+            lon: number | null;
+            /** Eci */
+            eci: number | null;
+            /** Cell Name */
+            cell_name: string | null;
+            /** Rsrp Median */
+            rsrp_median: number | null;
+            /** Sinr Median */
+            sinr_median: number | null;
+        };
+        /** ServingCellRead */
+        ServingCellRead: {
+            /** Eci */
+            eci: number;
+            /** Enb Id */
+            enb_id: number | null;
+            /** Local Cell Id */
+            local_cell_id: number | null;
+            /** Pci */
+            pci: number | null;
+            /** Cell Id */
+            cell_id: number | null;
+            /** Cell Name */
+            cell_name: string | null;
+            /** Site Id */
+            site_id: number | null;
+            /** Site Code */
+            site_code: string | null;
+            /** Samples */
+            samples: number;
+            /** Rsrp Median */
+            rsrp_median: number | null;
+            /** Rsrq Median */
+            rsrq_median: number | null;
+            /** Sinr Median */
+            sinr_median: number | null;
+            /** Max Distance M */
+            max_distance_m: number | null;
+            /** Inventory Pci */
+            inventory_pci: number | null;
         };
         /** SheetReport */
         SheetReport: {
@@ -1637,6 +2048,46 @@ export interface components {
          * @enum {string}
          */
         Status: "planned" | "active" | "inactive" | "dismantled";
+        /**
+         * TrackRead
+         * @description Samples with a position, column by column.
+         */
+        TrackRead: {
+            /** Seq */
+            seq: number[];
+            /** Time */
+            time: string[];
+            /** Lat */
+            lat: number[];
+            /** Lon */
+            lon: number[];
+            /** Rsrp */
+            rsrp: (number | null)[];
+            /** Rsrq */
+            rsrq: (number | null)[];
+            /** Sinr */
+            sinr: (number | null)[];
+            /** Pci */
+            pci: (number | null)[];
+            /** Eci */
+            eci: (number | null)[];
+            /** Cell Id */
+            cell_id: (number | null)[];
+        };
+        /** UnknownCellRead */
+        UnknownCellRead: {
+            /** Eci */
+            eci: number;
+            /** Enb Id */
+            enb_id: number | null;
+            /** Local Cell Id */
+            local_cell_id: number | null;
+            /** Pci */
+            pci: number | null;
+            /** Samples */
+            samples: number;
+            hint: components["schemas"]["RenumberHintRead"] | null;
+        };
         /** UnlinkedKpiCellRead */
         UnlinkedKpiCellRead: {
             /** Kpi Cell Id */
@@ -3137,6 +3588,296 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["KpiCellRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    metrics_api_v1_drive_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricRead"][];
+                };
+            };
+        };
+    };
+    import_log_api_v1_drive_sessions_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_log_api_v1_drive_sessions_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveImportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sessions_api_v1_drive_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveSessionListItem"][];
+                };
+            };
+        };
+    };
+    get_session_api_v1_drive_sessions__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveSessionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_session_api_v1_drive_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_session_api_v1_drive_sessions__session_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DriveSessionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveSessionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_api_v1_drive_sessions__session_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveReportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rematch_api_v1_drive_sessions__session_id__rematch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveReportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    track_api_v1_drive_sessions__session_id__track_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    original_api_v1_drive_sessions__session_id__original_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -4,13 +4,15 @@
 
 Mapping (source columns → template):
 - SITENAME "ERBS_34366_AKTOGCAREER_1_KK" → site code "34366", site name "AKTOGCAREER_1_KK",
-  eNB ID 34366 (assumed: the number in the name; check against a phone or CM export), eNB name;
+  eNB ID 534366 ("5" + the site number, as the phones report it: NetMonitor log of 14.07.2024,
+  9 eNodeBs; cell names P_534366-70 follow the same scheme), eNB name;
 - EUTRANCELL → cell name, Cell ID, PHYSICALCELLID, EARFCNDL (UL = DL + 18000 for bands 1–28),
   AZIMUT, HEIGHT, tilts, antenna type;
 - indoor/DAS cells get no azimuth (drawn as a circle); their type goes to the cell notes;
 - Tower = 1 → mobile site on a mobile tower, ДГУ = 1 → powered by a diesel generator;
 - the unnamed column after "Number of antennas" (PCI / 3) is skipped: the app checks PCI mod 3;
-- bandwidth and power are not in the source: pass them with `bandwidth_mhz`, `max_tx_power_dbm`;
+- bandwidth, power and TAC are not in the source: pass them with `bandwidth_mhz`,
+  `max_tx_power_dbm`, `tac`;
 - remote sectors ("Remote сектор ERBS_<code>[_<name>]" in the comment, or other coordinates than the
   rest of the site) become their own sites, with "Код сайта eNB" pointing back to the eNodeB's site.
   The source gives remote sectors the eNodeB's coordinates: pass the real ones with `positions`.
@@ -26,6 +28,7 @@ from openpyxl import load_workbook
 from dtat.inventory.excel import CELLS, SITES, build_workbook
 
 OUTDOOR_BEAMWIDTH_DEG = 65.0  # horizontal beamwidth of typical macro panels (HW ADU, Kathrein)
+ENB_ID_PREFIX = "5"  # eNB ID = "5" + site number (see the module docstring)
 UL_OFFSET = 18000  # EARFCN UL − EARFCN DL for FDD bands 1–28
 REMOTE_RE = re.compile(r"Remote сектор\s+ERBS_([A-Za-z0-9]+)(?:_(\S+))?", re.IGNORECASE)
 SITENAME_RE = re.compile(r"^ERBS_(\d+)_(.+)$")
@@ -67,6 +70,7 @@ def convert(
     positions: dict[str, tuple[float, float]] | None = None,
     *,
     bandwidth_mhz: float | None = None,
+    tac: int | None = None,
     max_tx_power_dbm: float | None = None,
 ) -> Conversion:
     positions = positions or {}
@@ -146,7 +150,7 @@ def convert(
         cells.append(
             {
                 "site_code": location.code,
-                "enb_id": int(enb_site_code),
+                "enb_id": int(ENB_ID_PREFIX + enb_site_code),
                 "enb_name": sitename,
                 "enb_site_code": enb_site_code if location is not home else None,
                 "local_cell_id": int(get(row, "Cell ID")),
@@ -157,6 +161,7 @@ def convert(
                 "earfcn_ul": earfcn + UL_OFFSET,
                 "bandwidth_mhz": bandwidth_mhz,
                 "max_tx_power_dbm": max_tx_power_dbm,
+                "tac": tac,
                 "antenna_model": _text(get(row, "Antenna type")) or None,
                 "height_m": _number(get(row, "HEIGHT")),
                 "azimuth_deg": None if indoor else _number(get(row, "AZIMUT")),

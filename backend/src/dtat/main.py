@@ -8,6 +8,7 @@ from dtat.audit.router import router as audit_router
 from dtat.auth.deps import DbSession
 from dtat.auth.router import router as auth_router
 from dtat.config import get_settings
+from dtat.drivetest.router import router as drivetest_router
 from dtat.errors import DomainError
 from dtat.inventory.excel_router import router as excel_router
 from dtat.inventory.router import router as inventory_router
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     api.include_router(maps_router)
     api.include_router(audit_router)
     api.include_router(kpi_router)
+    api.include_router(drivetest_router)
     app.include_router(api)
 
     @app.get("/api/health", tags=["system"])

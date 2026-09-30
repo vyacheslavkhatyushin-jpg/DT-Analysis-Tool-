@@ -3,6 +3,7 @@
 from dtat.audit.models import ChangeLog
 from dtat.auth.models import User
 from dtat.db import Base
+from dtat.drivetest.models import DriveSession, Measurement
 from dtat.inventory.models import (
     Asset,
     Cell,
@@ -22,11 +23,13 @@ __all__ = [
     "CellVersion",
     "ChangeLog",
     "Device",
+    "DriveSession",
     "ENodeB",
     "KpiCell",
     "KpiFile",
     "KpiSample",
     "MapOverlay",
+    "Measurement",
     "Site",
     "SitePosition",
     "User",
