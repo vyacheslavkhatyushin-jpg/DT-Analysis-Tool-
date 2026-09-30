@@ -47,6 +47,7 @@ import {
   qualityRanges,
 } from '../drive/drive'
 import { ReportPanel } from '../drive/ReportPanel'
+import { useBasemapChoice } from '../map/basemap'
 import { cellLabelFeatures, sectorFeatures, siteFeatures } from '../map/features'
 import { boundsOf, type LonLat } from '../map/geo'
 import { type FlyTarget, type InitialView, MapView } from '../map/MapView'
@@ -107,6 +108,7 @@ function SessionView({
   metrics: DriveMetric[]
 }) {
   const inventory = useMapInventory()
+  const { basemaps, basemap, setBasemapId } = useBasemapChoice()
   const [colorBy, setColorBy] = useLocalStorage<ColorBy>({
     key: 'drive.colorBy',
     defaultValue: 'rsrp',
@@ -166,7 +168,7 @@ function SessionView({
   const style = useMemo(
     () =>
       buildStyle({
-        basemap: null,
+        basemap,
         overlays: [],
         sites: siteFeatures(sites),
         // Sectors recede to gray: the track carries the color here.
@@ -179,7 +181,7 @@ function SessionView({
         trackLink: link,
         selectedPoint: selected !== null ? (track.seq[selected] ?? null) : null,
       }),
-    [sites, sectorRadius, selectedCell, trackFeatures, link, selected, track.seq],
+    [basemap, sites, sectorRadius, selectedCell, trackFeatures, link, selected, track.seq],
   )
 
   const initialView = useMemo<InitialView | null>(() => {
@@ -256,6 +258,17 @@ function SessionView({
             </Stack>
           )}
           {selected !== null && <PointCard track={track} index={selected} report={report} />}
+          {basemaps.length > 0 && (
+            <Select
+              size="xs"
+              aria-label="Подложка"
+              placeholder="без подложки"
+              data={basemaps.map((b) => ({ value: b.id, label: b.name }))}
+              value={basemap?.id ?? null}
+              onChange={setBasemapId}
+              clearable
+            />
+          )}
         </Stack>
       </Paper>
       <Paper
