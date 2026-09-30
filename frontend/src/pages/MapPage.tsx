@@ -8,13 +8,13 @@ import {
   type MapCell,
   type MapSite,
   type SearchHit,
-  useBasemaps,
   useKpiCatalogue,
   useKpiSummary,
   useMapInventory,
   useOverlays,
 } from '../api/hooks'
 import { formatKpi, LEVEL_COLORS, type Statistic, statOf, statsByCell } from '../kpi/kpi'
+import { useBasemapChoice } from '../map/basemap'
 import { assignCarrierColors, OTHER_CARRIER_COLOR } from '../map/carriers'
 import { cellLabelFeatures, sectorFeatures, siteFeatures } from '../map/features'
 import { boundsOf, type LonLat } from '../map/geo'
@@ -45,15 +45,11 @@ function parseSelection(params: URLSearchParams): Selection {
 export function MapPage() {
   const inventory = useMapInventory()
   const overlays = useOverlays()
-  const basemaps = useBasemaps()
+  const { basemaps, basemap, isPending: basemapsPending, setBasemapId } = useBasemapChoice()
   const [params, setParams] = useSearchParams()
   const selection = parseSelection(params)
 
   // Per-viewer display preferences survive page reloads.
-  const [basemapId, setBasemapId] = useLocalStorage<string | null>({
-    key: 'map.basemap',
-    defaultValue: null,
-  })
   // The viewer's own overlay toggles; overlays never toggled follow their visible_by_default.
   const [overlayToggles, setOverlayToggles] = useLocalStorage<Record<string, boolean>>({
     key: 'map.overlayVisibility',
@@ -111,7 +107,6 @@ export function MapPage() {
     return (cell: MapCell) =>
       formatKpi(statOf(kpiByCell.get(cell.id)?.values[colorBy], statistic).value, kpiDef)
   }, [kpiByCell, colorBy, statistic, kpiDef])
-  const basemap = basemaps.data?.find((b) => b.id === basemapId) ?? null
   const hiddenSet = useMemo(
     () =>
       new Set(
@@ -157,7 +152,7 @@ export function MapPage() {
 
   // Opened with ?site= or ?cell= (from a table): start on that object, otherwise show the network.
   const initialView = useMemo<InitialView | null>(() => {
-    if (!inventory.data || basemaps.isPending) return null
+    if (!inventory.data || basemapsPending) return null
     if (selection) {
       const site = sites.find((s) =>
         selection.type === 'site'
@@ -170,7 +165,7 @@ export function MapPage() {
     return bounds ? { bounds } : null
     // Computed for the first render with data only; later selections do not move the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inventory.data, basemaps.isPending])
+  }, [inventory.data, basemapsPending])
 
   const panelOpen = selection !== null
   const padding = useMemo(() => paddingFor(panelOpen), [panelOpen])
@@ -215,7 +210,7 @@ export function MapPage() {
         style={{ zIndex: 2 }}
       >
         <LayersPanel
-          basemaps={basemaps.data ?? []}
+          basemaps={basemaps}
           basemapId={basemap?.id ?? null}
           onBasemap={setBasemapId}
           overlays={overlays.data ?? []}
